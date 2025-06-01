@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ar">
+  <head>
+    <meta charset="UTF-8" />
+    <title>تم إرسال الطلب</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-light">
+    <div class="container mt-5">
+      <div class="alert alert-success text-center">
+        <h4>✅ تم إرسال طلبك بنجاح</h4>
+        <p>رقم الطلب الخاص بك هو: <strong>{{ booking_id }}</strong></p>
+        <p>احتفظ بهذا الرقم لمتابعة حالة الطلب.</p>
+        <a href="{% url 'track_booking' %}" class="btn btn-outline-primary mt-3"
+          >متابعة الطلب</a
+        >
+      </div>
+    </div>
+  </body>
+</html>
