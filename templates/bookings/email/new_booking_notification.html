@@ -2,7 +2,7 @@
 <html dir="rtl" lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>تم قبول طلب حجز القاعة</title>
+    <title>طلب حجز قاعة جديد</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,8 +13,7 @@
             padding: 20px;
         }
         .header {
-            background-color: #198754;
-            color: white;
+            background-color: #f8f9fa;
             padding: 20px;
             text-align: center;
             border-radius: 5px;
@@ -36,7 +35,7 @@
         .button {
             display: inline-block;
             padding: 10px 20px;
-            background-color: #198754;
+            background-color: #007bff;
             color: #fff;
             text-decoration: none;
             border-radius: 5px;
@@ -46,13 +45,16 @@
 </head>
 <body>
     <div class="header">
-        <h1>تم قبول طلب حجز القاعة</h1>
+        <h1>طلب حجز قاعة جديد</h1>
     </div>
     
     <div class="details">
-        <p>مرحباً {{ booking.full_name }},</p>
-        <p>نود إعلامكم بأنه تم قبول طلب حجز القاعة الخاص بكم. تفاصيل الحجز كالتالي:</p>
+        <p>تم استلام طلب حجز قاعة جديد من:</p>
         <ul>
+            <li><strong>الاسم:</strong> {{ booking.full_name }}</li>
+            <li><strong>البريد الإلكتروني:</strong> {{ booking.email }}</li>
+            <li><strong>رقم الهاتف:</strong> {{ booking.phone_number }}</li>
+            <li><strong>الشركة:</strong> {{ booking.company.name }}</li>
             <li><strong>القاعة:</strong> {{ booking.get_room_display }}</li>
             <li><strong>التاريخ:</strong> {{ booking.date }}</li>
             <li><strong>وقت البدء:</strong> {{ booking.start_time }}</li>
@@ -62,12 +64,11 @@
             <li><strong>ملاحظات:</strong> {{ booking.notes }}</li>
             {% endif %}
         </ul>
-        <p>يرجى مراجعة المرفق للحصول على تأكيد الحجز.</p>
     </div>
     
     <div class="footer">
-        <p>يمكنك متابعة حالة الحجز من خلال الرابط التالي:</p>
-        <a href="{{ tracking_url }}" class="button">متابعة الحجز</a>
+        <p>يمكنك متابعة حالة الطلب من خلال الرابط التالي:</p>
+        <a href="{{ tracking_url }}" class="button">متابعة الطلب</a>
         <p>مجموعة مارينا - نظام حجز القاعات</p>
     </div>
 </body>

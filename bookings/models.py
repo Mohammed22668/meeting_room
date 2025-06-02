@@ -3,14 +3,14 @@ from django.db import models
 # Create your models here.
 
 STATUS_CHOICES = [
- ('pending', 'معلق'),
+ ('pending', 'قيد الانتظار'),
     ('accepted', 'مقبول'),
     ('rejected', 'مرفوض'),
 ]  
 
 ROOM_CHOICES = [
-    ('room1', 'قاعة الاجتماعات الرئيسية'),
-    ('room2', 'قاعة  تدريب مجموعة مارينا'),
+    ('room1', 'قاعة الاجتماعات الرئيسية/16 شخص'),
+    ('room2', 'قاعة  تدريب مجموعة مارينا/24 شخص'),
 ]
 
 class Company(models.Model):

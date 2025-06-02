@@ -8,10 +8,11 @@ from .forms import BookingRequestForm
 from django.core.serializers.json import DjangoJSONEncoder
 import json
 from django.contrib import messages
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
+from .pdf_generator import create_booking_pdf
 
 
 
@@ -57,6 +58,32 @@ def booking_form(request):
             booking = form.save(commit=False)
             booking.status = 'pending'
             booking.save()
+
+            # إرسال بريد إلكتروني للمشرفين
+            subject = 'طلب حجز قاعة جديد'
+            html_message = render_to_string('bookings/email/new_booking_notification.html', {
+                'booking': booking,
+                'tracking_url': f"{settings.SITE_URL}/track/{booking.id}/"
+            })
+            
+            # قائمة البريد الإلكتروني للمستلمين
+            recipient_list = [
+                'ezio.ahmed12@gmail.com',
+                'prog_dev@marinagroupiq.com'
+            ]
+            
+            # إنشاء رسالة البريد الإلكتروني
+            email = EmailMessage(
+                subject=subject,
+                body=html_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=recipient_list,
+            )
+            email.content_subtype = "html"  # تحديد نوع المحتوى كـ HTML
+            
+            # إرسال البريد الإلكتروني
+            email.send(fail_silently=False)
+
             messages.success(request, "تم تقديم طلب الحجز بنجاح، في انتظار الموافقة.")
             return redirect('booking_success', booking_id=booking.id)
 
@@ -66,7 +93,10 @@ def booking_form(request):
     end_week = start_week + timedelta(days=6)  # نهاية الأسبوع (الأحد)
 
     # جلب جميع الحجوزات خلال الأسبوع
-    bookings_qs = BookingRequest.objects.filter(date__range=[start_week, end_week])
+    bookings_qs = BookingRequest.objects.filter(
+        date__range=[start_week, end_week],
+        status__in=['pending', 'accepted']  # استبعاد الحجوزات المرفوضة
+    )
 
     # تجهيز بيانات الأحداث للكالندر
     bookings_events = []
@@ -77,7 +107,6 @@ def booking_form(request):
         color = {
             'pending': '#ffc107',  # أصفر
             'accepted': '#198754',  # أخضر
-            'rejected': '#dc3545',  # أحمر
         }.get(b.status, '#6c757d')  # رمادي افتراضي
 
         event_data = {
@@ -85,13 +114,14 @@ def booking_form(request):
             'start': start_dt,
             'end': end_dt,
             'color': color,
+            'extendedProps': {
+                'status': dict(STATUS_CHOICES)[b.status],
+                'company': b.company.name if b.company else '',
+                'room': dict(ROOM_CHOICES)[b.room] if b.room else '',
+                'purpose': b.purpose,
+                'notes': b.notes or ''
+            }
         }
-
-        # إضافة معلومات الشركة والقاعة إذا كانت متوفرة
-        if b.company:
-            event_data['company'] = b.company.name
-        if b.room:
-            event_data['room'] = dict(ROOM_CHOICES)[b.room]
 
         bookings_events.append(event_data)
 
@@ -153,17 +183,29 @@ def send_booking_accepted_email(booking):
     
     # تحميل قالب HTML
     html_message = render_to_string('bookings/email/booking_accepted.html', context)
-    plain_message = strip_tags(html_message)
+    
+    # إنشاء ملف PDF
+    pdf_path = create_booking_pdf(booking)
+    
+    # إنشاء رسالة البريد الإلكتروني
+    email = EmailMessage(
+        subject=subject,
+        body=html_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[booking.email],
+    )
+    email.content_subtype = "html"  # تحديد نوع المحتوى كـ HTML
+    
+    # إرفاق ملف PDF
+    with open(pdf_path, 'rb') as f:
+        email.attach(
+            f'booking_confirmation_{booking.id}.pdf',
+            f.read(),
+            'application/pdf'
+        )
     
     # إرسال البريد الإلكتروني
-    send_mail(
-        subject=subject,
-        message=plain_message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[booking.email],
-        html_message=html_message,
-        fail_silently=False,
-    )
+    email.send(fail_silently=False)
 
 def accept_booking(request, booking_id):
     """قبول طلب الحجز وإرسال بريد إلكتروني"""
@@ -172,12 +214,55 @@ def accept_booking(request, booking_id):
         booking.status = 'accepted'
         booking.save()
         
-        # إرسال بريد إلكتروني
-        send_booking_accepted_email(booking)
+        # إنشاء ملف PDF
+        pdf_path = create_booking_pdf(booking)
         
-        messages.success(request, 'تم قبول الحجز وإرسال تأكيد بالبريد الإلكتروني.')
+        # إرسال بريد إلكتروني
+        subject = 'تم قبول طلب حجز القاعة'
+        
+        # إنشاء رابط متابعة الحجز
+        tracking_url = f"{settings.SITE_URL}/track/{booking.id}/"
+        
+        # تحضير سياق القالب
+        context = {
+            'booking': booking,
+            'tracking_url': tracking_url
+        }
+        
+        # تحميل قالب HTML
+        html_message = render_to_string('bookings/email/booking_accepted.html', context)
+        
+        try:
+            # إنشاء رسالة البريد الإلكتروني
+            email = EmailMessage(
+                subject=subject,
+                body=html_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[booking.email],
+            )
+            email.content_subtype = "html"  # تحديد نوع المحتوى كـ HTML
+            
+            # إرفاق ملف PDF
+            with open(pdf_path, 'rb') as f:
+                email.attach(
+                    f'booking_confirmation_{booking.id}.pdf',
+                    f.read(),
+                    'application/pdf'
+                )
+            
+            # إرسال البريد الإلكتروني
+            email.send(fail_silently=False)
+            
+            messages.success(request, 'تم قبول الحجز وإرسال تأكيد بالبريد الإلكتروني.')
+        except Exception as e:
+            messages.error(request, f'تم قبول الحجز ولكن حدث خطأ في إرسال البريد الإلكتروني: {str(e)}')
+            print(f"Error sending email: {e}")  # للتتبع في السجلات
+            
     except BookingRequest.DoesNotExist:
         messages.error(request, 'لم يتم العثور على طلب الحجز.')
+    except Exception as e:
+        messages.error(request, f'حدث خطأ: {str(e)}')
+        print(f"Error in accept_booking: {e}")  # للتتبع في السجلات
     
     return redirect('admin_bookings')  # أو أي صفحة أخرى تريد التوجيه إليها
 

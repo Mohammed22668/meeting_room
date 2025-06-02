@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تأكيد طلب حجز القاعة</title>
+    <style>
+        body {
+            font-family: 'Tajawal', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #eee;
+        }
+        .content {
+            padding: 20px 0;
+        }
+        .booking-details {
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .booking-detail {
+            margin: 10px 0;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            border-top: 2px solid #eee;
+            font-size: 0.9em;
+            color: #666;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #007bff;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>تأكيد طلب حجز القاعة</h2>
+        </div>
+        <div class="content">
+            <p>مرحباً،</p>
+            <p>تم استلام طلب حجز جديد. تفاصيل الحجز كالتالي:</p>
+            
+            <div class="booking-details">
+                <div class="booking-detail">
+                    <strong>الاسم:</strong> {{ booking.full_name }}
+                </div>
+                <div class="booking-detail">
+                    <strong>البريد الإلكتروني:</strong> {{ booking.email }}
+                </div>
+                <div class="booking-detail">
+                    <strong>رقم الهاتف:</strong> {{ booking.phone_number }}
+                </div>
+                <div class="booking-detail">
+                    <strong>الشركة:</strong> {{ booking.company.name }}
+                </div>
+                <div class="booking-detail">
+                    <strong>القاعة:</strong> {{ booking.get_room_display }}
+                </div>
+                <div class="booking-detail">
+                    <strong>التاريخ:</strong> {{ booking.date }}
+                </div>
+                <div class="booking-detail">
+                    <strong>وقت البدء:</strong> {{ booking.start_time }}
+                </div>
+                <div class="booking-detail">
+                    <strong>وقت الانتهاء:</strong> {{ booking.end_time }}
+                </div>
+                <div class="booking-detail">
+                    <strong>الغرض:</strong> {{ booking.purpose }}
+                </div>
+                {% if booking.notes %}
+                <div class="booking-detail">
+                    <strong>ملاحظات:</strong> {{ booking.notes }}
+                </div>
+                {% endif %}
+            </div>
+
+            <p>يمكنك متابعة حالة الطلب من خلال الرابط التالي:</p>
+            <a href="{{ tracking_url }}" class="button">متابعة حالة الطلب</a>
+        </div>
+        <div class="footer">
+            <p>هذا بريد إلكتروني تلقائي، يرجى عدم الرد عليه.</p>
+        </div>
+    </div>
+</body>
+</html> 
