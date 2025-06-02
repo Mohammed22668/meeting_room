@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'bookings',
+     "widget_tweaks",
 ]
 
 MIDDLEWARE = [
@@ -127,3 +128,15 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # أو خادم SMTP الخاص بك
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'eo.ghost12@gmail.com'  # بريدك الإلكتروني
+EMAIL_HOST_PASSWORD = 'zzvi cztn yavf xsgb'  # كلمة المرور الخاصة بالتطبيق
+DEFAULT_FROM_EMAIL = 'eo.ghost12@gmail.com'  # البريد الإلكتروني الافتراضي للمراسلات
+
+# Site URL for email links
+SITE_URL = 'http://localhost:8000'  # تغيير هذا في الإنتاج إلى عنوان موقعك

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 0 0 5px 5px;
+        }
+        .booking-details {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+            border: 1px solid #eee;
+        }
+        .booking-detail {
+            margin: 10px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .booking-detail:last-child {
+            border-bottom: none;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>تم قبول طلب حجز القاعة</h2>
+    </div>
+    <div class="content">
+        <p>مرحباً {{ booking.full_name }},</p>
+        <p>يسرنا إعلامكم بأنه تم قبول طلب حجز القاعة الخاص بكم. فيما يلي تفاصيل الحجز:</p>
+        
+        <div class="booking-details">
+            <div class="booking-detail">
+                <strong>رقم الحجز:</strong> {{ booking.id }}
+            </div>
+            <div class="booking-detail">
+                <strong>القاعة:</strong> {{ booking.get_room_display }}
+            </div>
+            <div class="booking-detail">
+                <strong>التاريخ:</strong> {{ booking.date }}
+            </div>
+            <div class="booking-detail">
+                <strong>وقت البدء:</strong> {{ booking.start_time }}
+            </div>
+            <div class="booking-detail">
+                <strong>وقت الانتهاء:</strong> {{ booking.end_time }}
+            </div>
+            {% if booking.company %}
+            <div class="booking-detail">
+                <strong>الشركة:</strong> {{ booking.company.name }}
+            </div>
+            {% endif %}
+            <div class="booking-detail">
+                <strong>الغرض:</strong> {{ booking.purpose }}
+            </div>
+            {% if booking.notes %}
+            <div class="booking-detail">
+                <strong>ملاحظات:</strong> {{ booking.notes }}
+            </div>
+            {% endif %}
+        </div>
+
+        <p>يمكنكم متابعة حالة الحجز في أي وقت من خلال الرابط التالي:</p>
+        <p><a href="{{ tracking_url }}">متابعة حالة الحجز</a></p>
+    </div>
+    <div class="footer">
+        <p>هذا البريد الإلكتروني تم إرساله تلقائياً، يرجى عدم الرد عليه.</p>
+    </div>
+</body>
+</html> 

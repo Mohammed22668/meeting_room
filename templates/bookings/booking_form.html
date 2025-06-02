@@ -1,35 +1,899 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>طلب حجز القاعة</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+      :root {
+        --primary-color: #2c3e50;
+        --secondary-color: #3498db;
+        --accent-color: #e74c3c;
+        --gradient-start: #2980b9;
+        --gradient-end: #2c3e50;
+        --text-light: #ecf0f1;
+        --text-dark: #2c3e50;
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s ease;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        min-height: 100vh;
+        margin: 0;
+        background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+        color: var(--text-light);
+        padding: 2rem 0;
+      }
+
+      .booking-section {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .booking-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"/></svg>') center/cover;
+        opacity: 0.1;
+        z-index: 0;
+      }
+
+      .booking-container {
+        position: relative;
+        z-index: 1;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 2rem;
+        margin: 0 auto;
+        max-width: 1200px;
+        box-shadow: var(--shadow);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .form-title {
+        color: var(--text-light);
+        font-weight: 700;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        padding-bottom: 1rem;
+        font-size: 2.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .form-title::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 150px;
+        height: 4px;
+        background: var(--text-light);
+        border-radius: 2px;
+        opacity: 0.5;
+      }
+
+      .form-section {
+        background: rgba(44, 62, 80, 0.5);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: var(--transition);
+      }
+
+      .form-section:hover {
+        background: rgba(44, 62, 80, 0.6);
+        transform: translateY(-2px);
+      }
+
+      .form-section-title {
+        color: var(--text-light);
+        font-size: 1.3rem;
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+      }
+
+      .form-section-title i {
+        color: var(--text-light);
+        opacity: 0.9;
+      }
+
+      .form-label {
+        font-weight: 600;
+        color: var(--text-light);
+        margin-bottom: 0.8rem;
+        font-size: 1.1rem;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+      }
+
+      .form-control, .form-select {
+        background: rgba(44, 62, 80, 0.7);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        color: var(--text-light);
+        font-size: 1.1rem;
+        padding: 1rem;
+        border-radius: 12px;
+        transition: var(--transition);
+      }
+
+      .form-control:focus, .form-select:focus {
+        background: rgba(44, 62, 80, 0.9);
+        border-color: var(--text-light);
+        box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.1);
+        color: var(--text-light);
+      }
+
+      .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      .form-select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: left 0.75rem center;
+        background-size: 16px 12px;
+        padding-left: 2.5rem;
+        cursor: pointer;
+      }
+
+      .form-select option {
+        background: var(--primary-color);
+        color: var(--text-light);
+        padding: 1rem;
+      }
+
+      .time-inputs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
+
+      .btn-submit {
+        background: var(--text-light);
+        color: var(--primary-color);
+        font-size: 1.1rem;
+        font-weight: 600;
+        padding: 1rem 2.5rem;
+        border-radius: 12px;
+        border: none;
+        width: 100%;
+        margin-top: 1.5rem;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.8rem;
+      }
+
+      .btn-submit:hover {
+        background: #fff;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .btn-home {
+        position: fixed;
+        top: 2rem;
+        right: 2rem;
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-light);
+        font-size: 1.1rem;
+        font-weight: 600;
+        padding: 0.8rem 1.5rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        text-decoration: none;
+        backdrop-filter: blur(10px);
+        z-index: 1000;
+      }
+
+      .btn-home:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+        color: var(--text-light);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .alert {
+        background: rgba(44, 62, 80, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: var(--text-light);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        backdrop-filter: blur(10px);
+      }
+
+      .alert-danger {
+        background: rgba(231, 76, 60, 0.2);
+        border-color: rgba(231, 76, 60, 0.3);
+      }
+
+      .alert-success {
+        background: rgba(46, 204, 113, 0.2);
+        border-color: rgba(46, 204, 113, 0.3);
+      }
+
+      #calendar {
+        background: rgba(44, 62, 80, 0.5);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+      }
+
+      .fc {
+        background: transparent !important;
+      }
+
+      .fc-theme-standard td, .fc-theme-standard th {
+        border-color: rgba(255, 255, 255, 0.1) !important;
+      }
+
+      .fc-theme-standard .fc-scrollgrid {
+        border-color: rgba(255, 255, 255, 0.1) !important;
+      }
+
+      .fc .fc-toolbar-title {
+        color: var(--text-light) !important;
+        font-size: 1.5rem !important;
+        font-weight: 600 !important;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+      }
+
+      .fc .fc-button {
+        background: rgba(44, 62, 80, 0.7) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: var(--text-light) !important;
+        text-shadow: none !important;
+        box-shadow: none !important;
+        border-radius: 12px !important;
+        padding: 0.5rem 1rem !important;
+        font-weight: 500 !important;
+        transition: var(--transition) !important;
+      }
+
+      .fc .fc-button:hover {
+        background: rgba(44, 62, 80, 0.9) !important;
+        transform: translateY(-2px);
+      }
+
+      .fc .fc-button-primary:not(:disabled).fc-button-active {
+        background: var(--text-light) !important;
+        color: var(--primary-color) !important;
+      }
+
+      .fc-event {
+        border-radius: 8px !important;
+        border: none !important;
+        background: rgba(44, 62, 80, 0.7) !important;
+        backdrop-filter: blur(5px);
+        padding: 4px 8px !important;
+      }
+
+      .fc-event-main-content {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .fc-event-title {
+        font-weight: 600 !important;
+        color: var(--text-light) !important;
+        font-size: 0.9rem !important;
+        line-height: 1.2 !important;
+      }
+
+      .fc-event-time {
+        font-size: 0.8rem !important;
+        color: var(--text-light) !important;
+        opacity: 0.9;
+      }
+
+      .fc-event-description {
+        font-size: 0.8rem !important;
+        color: var(--text-light) !important;
+        opacity: 0.9;
+        margin-top: 2px;
+      }
+
+      .fc-timegrid-event {
+        min-height: 25px !important;
+      }
+
+      .fc-timegrid-slot {
+        height: 40px !important;
+      }
+
+      .fc-timegrid-slot-label {
+        font-size: 0.8rem !important;
+      }
+
+      .fc-timegrid-axis {
+        font-size: 0.8rem !important;
+      }
+
+      .fc-timegrid-slot-minor {
+        border-top-style: dashed !important;
+      }
+
+      .errorlist {
+        color: #ff6b6b;
+        list-style: none;
+        padding: 0;
+        margin: 0.5rem 0;
+        font-size: 0.9rem;
+        background: rgba(255, 107, 107, 0.1);
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 107, 107, 0.2);
+      }
+
+      .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
+      }
+
+      /* إضافة أنماط النافذة المنبثقة */
+      .event-popup {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(44, 62, 80, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 1.5rem;
+        border-radius: 16px;
+        z-index: 1000;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .event-popup.active {
+        display: block;
+        animation: popupFadeIn 0.3s ease;
+      }
+
+      @keyframes popupFadeIn {
+        from {
+          opacity: 0;
+          transform: translate(-50%, -48%);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, -50%);
+        }
+      }
+
+      .event-popup-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .event-popup-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text-light);
+        margin: 0;
+      }
+
+      .event-popup-close {
+        background: none;
+        border: none;
+        color: var(--text-light);
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 0.5rem;
+        opacity: 0.7;
+        transition: var(--transition);
+      }
+
+      .event-popup-close:hover {
+        opacity: 1;
+      }
+
+      .event-popup-content {
+        color: var(--text-light);
+      }
+
+      .event-popup-detail {
+        margin-bottom: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+      }
+
+      .event-popup-detail i {
+        width: 20px;
+        opacity: 0.8;
+      }
+
+      .event-popup-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(3px);
+        z-index: 999;
+      }
+
+      .event-popup-overlay.active {
+        display: block;
+        animation: overlayFadeIn 0.3s ease;
+      }
+
+      @keyframes overlayFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @media (max-width: 768px) {
+        body {
+          padding: 1rem;
+        }
+
+        .booking-container {
+          padding: 1.5rem;
+        }
+
+        .form-section {
+          padding: 1.5rem;
+        }
+
+        .time-inputs {
+          grid-template-columns: 1fr;
+        }
+
+        .form-title {
+          font-size: 2rem;
+        }
+
+        .form-section-title {
+          font-size: 1.2rem;
+        }
+
+        .btn-home {
+          top: 1rem;
+          right: 1rem;
+          padding: 0.6rem 1.2rem;
+          font-size: 1rem;
+        }
+
+        /* تحسينات التقويم للهاتف */
+        #calendar {
+          padding: 1rem;
+        }
+
+        .fc-timegrid-event {
+          min-height: auto !important;
+          margin: 2px 0 !important;
+        }
+
+        .fc-event {
+          padding: 8px !important;
+          margin: 0 !important;
+          border-radius: 8px !important;
+        }
+
+        .fc-event-main-content {
+          display: flex !important;
+          flex-direction: row !important;
+          align-items: center !important;
+          gap: 8px !important;
+          position: relative !important;
+          padding-right: 30px !important;
+        }
+
+        .event-info-icon {
+          position: absolute !important;
+          left: 8px !important;
+          top: 50% !important;
+          transform: translateY(-50%) !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          width: 20px !important;
+          height: 20px !important;
+          background: rgba(255, 255, 255, 0.15) !important;
+          border-radius: 50% !important;
+          cursor: pointer !important;
+          transition: var(--transition) !important;
+          z-index: 2 !important;
+        }
+
+        .event-info-icon:hover {
+          background: rgba(255, 255, 255, 0.25) !important;
+          transform: translateY(-50%) scale(1.1) !important;
+        }
+
+        .event-info-icon i {
+          font-size: 0.7rem !important;
+          color: var(--text-light) !important;
+        }
+
+        .fc-event-time {
+          background: rgba(255, 255, 255, 0.1) !important;
+          padding: 4px 8px !important;
+          border-radius: 4px !important;
+          font-size: 0.8rem !important;
+          white-space: nowrap !important;
+          min-width: 70px !important;
+          text-align: center !important;
+        }
+
+        .fc-event-title {
+          font-size: 0.9rem !important;
+          white-space: normal !important;
+          flex: 1 !important;
+          margin: 0 !important;
+          padding-right: 4px !important;
+        }
+
+        .fc-timegrid-slot {
+          height: 60px !important;
+        }
+
+        .fc-timegrid-slot-label {
+          font-size: 0.7rem !important;
+        }
+
+        .fc-timegrid-axis {
+          font-size: 0.7rem !important;
+        }
+
+        .fc-toolbar {
+          flex-direction: column !important;
+          gap: 10px !important;
+        }
+
+        .fc-toolbar-chunk {
+          display: flex !important;
+          justify-content: center !important;
+          width: 100% !important;
+        }
+
+        .fc-header-toolbar {
+          margin-bottom: 1.5rem !important;
+        }
+
+        .fc-toolbar-title {
+          font-size: 1.2rem !important;
+        }
+
+        .fc-button {
+          padding: 0.4rem 0.8rem !important;
+          font-size: 0.9rem !important;
+        }
+
+        /* إخفاء بعض العناصر غير الضرورية في وضع الهاتف */
+        .fc-timegrid-slot-minor {
+          display: none !important;
+        }
+
+        .fc-timegrid-slot-label {
+          padding: 2px !important;
+        }
+
+        /* تحسين عرض الأحداث في وضع اليوم */
+        .fc-timeGridDay-view .fc-event-main-content {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+        }
+
+        .fc-timeGridDay-view .fc-event-time {
+          margin-bottom: 4px !important;
+        }
+
+        .fc-timeGridDay-view .fc-event-description {
+          font-size: 0.8rem !important;
+          margin-top: 4px !important;
+          padding-top: 4px !important;
+          border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+      }
+    </style>
   </head>
-  <body class="bg-light">
-    <div class="container mt-5">
-      <h2 class="mb-4 text-center">نموذج طلب حجز القاعة</h2>
-      <div class="card shadow p-4">
-        <form method="post">
-          {% csrf_token %}
-          <div class="row g-3">
-            {% for field in form %}
-            <div class="col-md-6">
-              <label class="form-label">{{ field.label }}</label>
-              {{ field }} {% if field.errors %}
-              <div class="text-danger small">{{ field.errors }}</div>
-              {% endif %}
-            </div>
-            {% endfor %}
+  <body>
+    <a href="{% url 'home' %}" class="btn-home">
+      <i class="fas fa-home"></i>
+      الصفحة الرئيسية
+    </a>
+    <div class="booking-section">
+      <div class="booking-container">
+        <div class="row g-4">
+          <div class="col-lg-6">
+            <h2 class="form-title">تقديم طلب حجز القاعة</h2>
+            
+            {% if messages %}
+              {% for message in messages %}
+                <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show" role="alert">
+                  {{ message }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              {% endfor %}
+            {% endif %}
+
+            <form method="post" novalidate>
+              {% csrf_token %}
+              {{ form.non_field_errors }}
+
+              <div class="form-section">
+                <div class="form-section-title">
+                  <i class="fas fa-user"></i>
+                  معلومات الحجز
+                </div>
+                <div class="mb-4">
+                  <label for="{{ form.full_name.id_for_label }}" class="form-label">{{ form.full_name.label }}</label>
+                  {{ form.full_name }}
+                  {{ form.full_name.errors }}
+                </div>
+                <div class="mb-4">
+                  <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+                  {{ form.email }}
+                  {{ form.email.errors }}
+                </div>
+                <div class="mb-4">
+                  <label for="{{ form.phone_number.id_for_label }}" class="form-label">{{ form.phone_number.label }}</label>
+                  {{ form.phone_number }}
+                  {{ form.phone_number.errors }}
+                </div>
+              </div>
+
+              <div class="form-section">
+                <div class="form-section-title">
+                  <i class="fas fa-building"></i>
+                  معلومات الشركة والقاعة
+                </div>
+                <div class="mb-4">
+                  <label for="{{ form.company.id_for_label }}" class="form-label">{{ form.company.label }}</label>
+                  {{ form.company }}
+                  {{ form.company.errors }}
+                </div>
+                <div class="mb-4">
+                  <label for="{{ form.room.id_for_label }}" class="form-label">{{ form.room.label }}</label>
+                  {{ form.room }}
+                  {{ form.room.errors }}
+                </div>
+              </div>
+
+              <div class="form-section">
+                <div class="form-section-title">
+                  <i class="fas fa-calendar-alt"></i>
+                  تفاصيل الموعد
+                </div>
+                <div class="mb-4">
+                  <label for="{{ form.date.id_for_label }}" class="form-label">{{ form.date.label }}</label>
+                  {{ form.date }}
+                  {{ form.date.errors }}
+                </div>
+                <div class="time-inputs">
+                  <div class="mb-4">
+                    <label for="{{ form.start_time.id_for_label }}" class="form-label">{{ form.start_time.label }}</label>
+                    {{ form.start_time }}
+                    {{ form.start_time.errors }}
+                  </div>
+                  <div class="mb-4">
+                    <label for="{{ form.end_time.id_for_label }}" class="form-label">{{ form.end_time.label }}</label>
+                    {{ form.end_time }}
+                    {{ form.end_time.errors }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <div class="form-section-title">
+                  <i class="fas fa-info-circle"></i>
+                  معلومات إضافية
+                </div>
+                <div class="mb-4">
+                  <label for="{{ form.purpose.id_for_label }}" class="form-label">{{ form.purpose.label }}</label>
+                  {{ form.purpose }}
+                  {{ form.purpose.errors }}
+                </div>
+                <div class="mb-4">
+                  <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
+                  {{ form.notes }}
+                  {{ form.notes.errors }}
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-submit">
+                <i class="fas fa-paper-plane"></i>
+                إرسال الطلب
+              </button>
+            </form>
           </div>
-          <div class="mt-4 text-center">
-            <button type="submit" class="btn btn-success px-4">
-              إرسال الطلب
-            </button>
+
+          <div class="col-lg-6">
+            <h2 class="form-title">الحجوزات لهذا الأسبوع</h2>
+            <div id="calendar"></div>
           </div>
-        </form>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+          initialView: 'timeGridWeek',
+          locale: 'ar',
+          firstDay: 6,
+          slotMinTime: '08:00:00',
+          slotMaxTime: '20:00:00',
+          height: 600,
+          events: {{ bookings|safe }},
+          headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'timeGridWeek,timeGridDay'
+          },
+          eventTimeFormat: {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          },
+          slotLabelFormat: {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          },
+          eventContent: function(arg) {
+            const viewType = arg.view.type;
+            const eventTitle = arg.event.title;
+            const eventTime = arg.timeText;
+            const company = arg.event.extendedProps.company || '';
+            const room = arg.event.extendedProps.room || '';
+            const purpose = arg.event.extendedProps.purpose || '';
+            const notes = arg.event.extendedProps.notes || '';
+            
+            if (viewType === 'timeGridWeek') {
+              // عرض مبسط للأسبوع
+              return {
+                html: `
+                  <div class="fc-event-main-content">
+                    <div class="fc-event-time">
+                      ${eventTime}
+                    </div>
+                    <div class="fc-event-title" title="${eventTitle}">
+                      <strong>${eventTitle}</strong>
+                    </div>
+                    <div class="event-info-icon" onclick="showEventDetails(event, '${eventTitle}', '${eventTime}', '${company}', '${room}', '${purpose}', '${notes}')">
+                      <i class="fas fa-info"></i>
+                    </div>
+                  </div>
+                `
+              };
+            } else {
+              // عرض تفصيلي لليوم
+              return {
+                html: `
+                  <div class="fc-event-main-content">
+                    <div class="fc-event-time">
+                      ${eventTime}
+                    </div>
+                    <div class="fc-event-title">
+                      <strong>${eventTitle}</strong>
+                    </div>
+                    <div class="fc-event-description">
+                      ${company ? company + ' - ' : ''}${room}
+                    </div>
+                    <div class="event-info-icon" onclick="showEventDetails(event, '${eventTitle}', '${eventTime}', '${company}', '${room}', '${purpose}', '${notes}')">
+                      <i class="fas fa-info"></i>
+                    </div>
+                  </div>
+                `
+              };
+            }
+          }
+        });
+        calendar.render();
+
+        flatpickr("input[type='date']", {
+          locale: "ar",
+          dateFormat: "Y-m-d",
+          minDate: "today",
+          disableMobile: "true"
+        });
+
+        flatpickr("input[type='time']", {
+          enableTime: true,
+          noCalendar: true,
+          dateFormat: "H:i",
+          time_24hr: true,
+          disableMobile: "true"
+        });
+      });
+
+      function showEventDetails(event, title, time, company, room, purpose, notes) {
+        event.stopPropagation();
+        document.getElementById('popupTitle').textContent = title;
+        document.getElementById('popupTime').textContent = time;
+        document.getElementById('popupCompany').textContent = company || 'غير محدد';
+        document.getElementById('popupRoom').textContent = room || 'غير محدد';
+        document.getElementById('popupPurpose').textContent = purpose || 'غير محدد';
+        document.getElementById('popupNotes').textContent = notes || 'لا توجد ملاحظات';
+        
+        document.getElementById('eventPopupOverlay').classList.add('active');
+        document.getElementById('eventPopup').classList.add('active');
+      }
+
+      function hideEventDetails() {
+        document.getElementById('eventPopupOverlay').classList.remove('active');
+        document.getElementById('eventPopup').classList.remove('active');
+      }
+
+      // إغلاق النافذة المنبثقة عند النقر خارجها
+      document.getElementById('eventPopupOverlay').addEventListener('click', hideEventDetails);
+    </script>
+
+    <!-- إضافة النافذة المنبثقة -->
+    <div class="event-popup-overlay" id="eventPopupOverlay"></div>
+    <div class="event-popup" id="eventPopup">
+      <div class="event-popup-header">
+        <h3 class="event-popup-title">تفاصيل الحجز</h3>
+        <button class="event-popup-close" onclick="hideEventDetails()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="event-popup-content">
+        <div class="event-popup-detail">
+          <i class="fas fa-user"></i>
+          <span id="popupTitle"></span>
+        </div>
+        <div class="event-popup-detail">
+          <i class="fas fa-clock"></i>
+          <span id="popupTime"></span>
+        </div>
+        <div class="event-popup-detail">
+          <i class="fas fa-building"></i>
+          <span id="popupCompany"></span>
+        </div>
+        <div class="event-popup-detail">
+          <i class="fas fa-door-open"></i>
+          <span id="popupRoom"></span>
+        </div>
+        <div class="event-popup-detail">
+          <i class="fas fa-bullseye"></i>
+          <span id="popupPurpose"></span>
+        </div>
+        <div class="event-popup-detail">
+          <i class="fas fa-sticky-note"></i>
+          <span id="popupNotes"></span>
+        </div>
       </div>
     </div>
   </body>
