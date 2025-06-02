@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-sb0r*tyo@*f!_ro+ir_whxu*#*gbhql#=q566zf#oc_4kj4-dv
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['www.marinareserve.com','marinareserve.com']
 
 
 # Application definition
@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'bookings',
      "widget_tweaks",
+    'import_export',
 ]
 
 MIDDLEWARE = [
@@ -77,8 +78,19 @@ WSGI_APPLICATION = 'meeting_room.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'marinadb25',
+        'USER': 'marinadb',
+        'PASSWORD': 'r53gVWvLHa0XkLlazAe6',
+        'HOST': '168.231.107.54',
+        'PORT': '3306',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'charset': 'utf8mb4',
+            'connect_timeout': 60,
+        },
+        'CONN_MAX_AGE': 60,
+        'CONN_HEALTH_CHECKS': True,
     }
 }
 
@@ -139,4 +151,4 @@ EMAIL_HOST_PASSWORD = 'zzvi cztn yavf xsgb'  # كلمة المرور الخاص�
 DEFAULT_FROM_EMAIL = 'eo.ghost12@gmail.com'  # البريد الإلكتروني الافتراضي للمراسلات
 
 # Site URL for email links
-SITE_URL = 'http://localhost:8000'  # تغيير هذا في الإنتاج إلى عنوان موقعك
+SITE_URL = 'https://www.marinareserve.com'  # تغيير هذا في الإنتاج إلى عنوان موقعك

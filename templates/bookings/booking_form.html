@@ -175,6 +175,60 @@
         gap: 1.5rem;
       }
 
+      .time-input {
+        background-color: rgba(44, 62, 80, 0.7) !important;
+        border: 2px solid rgba(255, 255, 255, 0.2) !important;
+        color: var(--text-light) !important;
+        font-size: 1.1rem !important;
+        padding: 1rem !important;
+        border-radius: 12px !important;
+        cursor: pointer !important;
+        transition: var(--transition) !important;
+      }
+
+      .time-input:hover {
+        border-color: var(--text-light) !important;
+        background-color: rgba(44, 62, 80, 0.9) !important;
+      }
+
+      .time-input:focus {
+        border-color: var(--text-light) !important;
+        box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.1) !important;
+      }
+
+      /* تخصيص شكل سهم الوقت */
+      .time-input::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+        opacity: 0.7;
+        cursor: pointer;
+        transition: var(--transition);
+      }
+
+      .time-input::-webkit-calendar-picker-indicator:hover {
+        opacity: 1;
+      }
+
+      /* تخصيص شكل القائمة المنسدلة للوقت */
+      .time-input::-webkit-datetime-edit {
+        color: var(--text-light);
+      }
+
+      .time-input::-webkit-datetime-edit-fields-wrapper {
+        color: var(--text-light);
+      }
+
+      .time-input::-webkit-datetime-edit-text {
+        color: var(--text-light);
+        padding: 0 0.2em;
+      }
+
+      .time-input::-webkit-datetime-edit-hour-field,
+      .time-input::-webkit-datetime-edit-minute-field,
+      .time-input::-webkit-datetime-edit-second-field {
+        color: var(--text-light);
+        padding: 0 0.2em;
+      }
+
       .btn-submit {
         background: var(--text-light);
         color: var(--primary-color);
@@ -625,6 +679,15 @@
 
         .fc-col-header-cell {
           min-width: 100px !important;
+          padding: 8px 2px !important;
+        }
+
+        .fc-col-header-cell-cushion {
+          font-size: 0.9rem !important;
+          padding: 4px !important;
+          white-space: nowrap !important;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
         }
 
         .fc-event {
@@ -647,6 +710,30 @@
 
         .event-info-icon i {
           font-size: 0.5rem;
+        }
+
+        /* تحسين عرض الأعمدة في وضع الهاتف */
+        .fc-timegrid-cols {
+          min-width: 100% !important;
+        }
+
+        .fc-timegrid-col {
+          min-width: 80px !important;
+        }
+
+        .fc-timegrid-slot-lane {
+          min-width: 80px !important;
+        }
+
+        /* تحسين عرض أسماء الأيام */
+        .fc-col-header-cell {
+          text-align: center !important;
+        }
+
+        .fc-col-header-cell-cushion {
+          display: inline-block !important;
+          width: 100% !important;
+          text-align: center !important;
         }
       }
     </style>
@@ -791,7 +878,7 @@
           },
           locale: 'ar',
           direction: 'rtl',
-          slotMinTime: '08:00:00',
+          slotMinTime: '09:00:00',
           slotMaxTime: '18:00:00',
           allDaySlot: false,
           slotDuration: '01:00:00',
@@ -812,6 +899,11 @@
             const viewType = arg.view.type;
             const eventTitle = arg.event.title;
             const eventTime = arg.timeText;
+            const eventDate = arg.event.start.toLocaleDateString('en-GB', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            }).replace(/\//g, '/');
             const company = arg.event.extendedProps.company || '';
             const room = arg.event.extendedProps.room || '';
             const purpose = arg.event.extendedProps.purpose || '';
@@ -826,7 +918,7 @@
                 <div class="fc-event-main-content ${statusClass}">
                   <div class="fc-event-time">${eventTime}</div>
                   <div class="fc-event-title">${eventTitle}</div>
-                  <div class="event-info-icon" onclick="showEventDetails(event, '${eventTitle}', '${eventTime}', '${company}', '${room}', '${purpose}', '${notes}')">
+                  <div class="event-info-icon" onclick="showEventDetails(event, '${eventTitle}', '${eventTime}', '${eventDate}', '${company}', '${room}', '${purpose}', '${notes}')">
                     <i class="fas fa-info"></i>
                   </div>
                 </div>
@@ -842,20 +934,13 @@
           minDate: "today",
           disableMobile: "true"
         });
-
-        flatpickr("input[type='time']", {
-          enableTime: true,
-          noCalendar: true,
-          dateFormat: "H:i",
-          time_24hr: true,
-          disableMobile: "true"
-        });
       });
 
-      function showEventDetails(event, title, time, company, room, purpose, notes) {
+      function showEventDetails(event, title, time, date, company, room, purpose, notes) {
         event.stopPropagation();
         document.getElementById('popupTitle').textContent = title;
         document.getElementById('popupTime').textContent = time;
+        document.getElementById('popupDate').textContent = date;
         document.getElementById('popupCompany').textContent = company || 'غير محدد';
         document.getElementById('popupRoom').textContent = room || 'غير محدد';
         document.getElementById('popupPurpose').textContent = purpose || 'غير محدد';
@@ -887,6 +972,10 @@
         <div class="event-popup-detail">
           <i class="fas fa-user"></i>
           <span id="popupTitle"></span>
+        </div>
+        <div class="event-popup-detail">
+          <i class="fas fa-calendar"></i>
+          <span id="popupDate"></span>
         </div>
         <div class="event-popup-detail">
           <i class="fas fa-clock"></i>

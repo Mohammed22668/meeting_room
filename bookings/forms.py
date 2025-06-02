@@ -44,15 +44,17 @@ class BookingRequestForm(forms.ModelForm):
             }),
             'start_time': forms.TimeInput(attrs={
                 'type': 'time',
-                'class': 'form-control',
+                'class': 'form-control time-input',
                 'min': '08:00',
                 'max': '20:00',
+                'step': '1800',  # 30 minutes in seconds
             }),
             'end_time': forms.TimeInput(attrs={
                 'type': 'time',
-                'class': 'form-control',
+                'class': 'form-control time-input',
                 'min': '08:00',
                 'max': '20:00',
+                'step': '1800',  # 30 minutes in seconds
             }),
             'notes': forms.Textarea(attrs={
                 'rows': 3,

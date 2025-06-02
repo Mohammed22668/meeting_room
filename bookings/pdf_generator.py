@@ -4,8 +4,8 @@ from reportlab.lib import colors
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
+from reportlab.lib.units import inch, cm
 import arabic_reshaper
 from bidi.algorithm import get_display
 import os
@@ -27,26 +27,51 @@ def ensure_directories():
     
     return pdfs_dir
 
+def process_arabic_text(text):
+    """معالجة النص العربي للعرض الصحيح"""
+    if not text:
+        return "-"
+    try:
+        # إضافة مسافة في نهاية النص إذا كان يحتوي على نص عربي
+        if any('\u0600' <= char <= '\u06FF' for char in text):
+            text = text + ' '
+        reshaped_text = arabic_reshaper.reshape(text)
+        bidi_text = get_display(reshaped_text)
+        return bidi_text
+    except Exception as e:
+        print(f"Error processing Arabic text: {e}")
+        return text
+
 def register_arabic_font():
     """تسجيل الخط العربي"""
     try:
-        # محاولة العثور على الخط في المسارات المختلفة
-        font_paths = [
-            os.path.join(settings.BASE_DIR, 'static', 'fonts', 'Cairo-Regular.ttf'),
-            os.path.join(settings.BASE_DIR, 'bookings', 'static', 'fonts', 'Cairo-Regular.ttf'),
-            os.path.join(settings.STATIC_ROOT, 'fonts', 'Cairo-Regular.ttf') if hasattr(settings, 'STATIC_ROOT') else None,
-        ]
+        # استخدام خط Arial مباشرة من نظام Windows
+        font_path = 'C:\\Windows\\Fonts\\arial.ttf'
         
-        # إزالة المسارات الفارغة
-        font_paths = [path for path in font_paths if path]
-        
-        # البحث عن أول مسار صالح
-        font_path = next((path for path in font_paths if os.path.exists(path)), None)
-        
-        if font_path:
-            pdfmetrics.registerFont(TTFont('Cairo', font_path))
+        if os.path.exists(font_path):
+            print(f"Using Arial font from: {font_path}")
+            pdfmetrics.registerFont(TTFont('ArabicFont', font_path))
             return True
-        return False
+        else:
+            print("Arial font not found, trying alternative fonts...")
+            # محاولة استخدام خطوط بديلة
+            alternative_fonts = [
+                'C:\\Windows\\Fonts\\arial.ttf',
+                'C:\\Windows\\Fonts\\arialbd.ttf',
+                'C:\\Windows\\Fonts\\ariali.ttf',
+                'C:\\Windows\\Fonts\\arialbi.ttf',
+                'C:\\Windows\\Fonts\\simsun.ttc',
+                'C:\\Windows\\Fonts\\simhei.ttf',
+            ]
+            
+            for font in alternative_fonts:
+                if os.path.exists(font):
+                    print(f"Using alternative font: {font}")
+                    pdfmetrics.registerFont(TTFont('ArabicFont', font))
+                    return True
+            
+            print("No suitable font found")
+            return False
     except Exception as e:
         print(f"Error registering font: {e}")
         return False
@@ -70,71 +95,89 @@ def create_booking_pdf(booking):
         doc = SimpleDocTemplate(
             filepath,
             pagesize=A4,
-            rightMargin=72,
-            leftMargin=72,
-            topMargin=72,
-            bottomMargin=72
+            rightMargin=0.8*cm,
+            leftMargin=0.8*cm,
+            topMargin=0.8*cm,
+            bottomMargin=0.8*cm
         )
         
         # قائمة العناصر التي سيتم إضافتها للمستند
         elements = []
         
+        # إضافة الشعار
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo', 'marina-logo.png')
+        if os.path.exists(logo_path):
+            logo = Image(logo_path, width=1.5*inch, height=1.5*inch)
+            elements.append(logo)
+            elements.append(Spacer(1, 0.3*inch))
+        
         # إضافة العنوان
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=getSampleStyleSheet()['Title'],
-            fontName='Cairo' if has_arabic_font else 'Helvetica',
-            fontSize=24,
-            spaceAfter=30,
-            alignment=1  # توسيط
+            fontName='ArabicFont' if has_arabic_font else 'Helvetica',
+            fontSize=20,
+            spaceAfter=20,
+            alignment=1,  # توسيط
+            leading=24,  # المسافة بين الأسطر
+            allowWidows=0,
+            allowOrphans=0,
+            textColor=colors.HexColor('#1a237e')  # لون أزرق داكن
         )
-        title = Paragraph(get_display(arabic_reshaper.reshape("تأكيد حجز القاعة")), title_style)
+        title = Paragraph(process_arabic_text("تأكيد حجز القاعة"), title_style)
         elements.append(title)
+        elements.append(Spacer(1, 0.2*inch))
         
         # إضافة معلومات الحجز
         data = [
-            [get_display(arabic_reshaper.reshape("الاسم الكامل")), get_display(arabic_reshaper.reshape(booking.full_name))],
-            [get_display(arabic_reshaper.reshape("البريد الإلكتروني")), booking.email],
-            [get_display(arabic_reshaper.reshape("رقم الهاتف")), booking.phone_number],
-            [get_display(arabic_reshaper.reshape("الشركة")), get_display(arabic_reshaper.reshape(booking.company.name)) if booking.company else "-"],
-            [get_display(arabic_reshaper.reshape("القاعة")), get_display(arabic_reshaper.reshape(dict(ROOM_CHOICES)[booking.room])) if booking.room else "-"],
-            [get_display(arabic_reshaper.reshape("التاريخ")), booking.date.strftime("%Y-%m-%d")],
-            [get_display(arabic_reshaper.reshape("وقت البدء")), booking.start_time.strftime("%I:%M %p")],
-            [get_display(arabic_reshaper.reshape("وقت الانتهاء")), booking.end_time.strftime("%I:%M %p")],
-            [get_display(arabic_reshaper.reshape("الغرض")), get_display(arabic_reshaper.reshape(booking.purpose))],
-            [get_display(arabic_reshaper.reshape("الملاحظات")), get_display(arabic_reshaper.reshape(booking.notes)) if booking.notes else "-"],
-            [get_display(arabic_reshaper.reshape("الحالة")), get_display(arabic_reshaper.reshape(dict(STATUS_CHOICES)[booking.status]))],
-            [get_display(arabic_reshaper.reshape("تاريخ الطلب")), booking.created_at.strftime("%Y-%m-%d %I:%M %p")],
+            [process_arabic_text(booking.full_name), process_arabic_text("الاسم الكامل")],
+            [booking.email, process_arabic_text("البريد الإلكتروني")],
+            [booking.phone_number, process_arabic_text("رقم الهاتف")],
+            [process_arabic_text(booking.company.name) if booking.company else "-", process_arabic_text("الشركة")],
+            [process_arabic_text(dict(ROOM_CHOICES)[booking.room]) if booking.room else "-", process_arabic_text("القاعة")],
+            [booking.date.strftime("%Y-%m-%d"), process_arabic_text("التاريخ")],
+            [booking.start_time.strftime("%I:%M %p"), process_arabic_text("وقت البدء")],
+            [booking.end_time.strftime("%I:%M %p"), process_arabic_text("وقت الانتهاء")],
+            [process_arabic_text(booking.purpose), process_arabic_text("الغرض")],
+            [process_arabic_text(booking.notes) if booking.notes else "-", process_arabic_text("الملاحظات")],
+            [process_arabic_text(dict(STATUS_CHOICES)[booking.status]), process_arabic_text("الحالة")],
+            [booking.created_at.strftime("%Y-%m-%d %I:%M %p"), process_arabic_text("تاريخ الطلب")],
         ]
         
         # إنشاء الجدول
-        table = Table(data, colWidths=[2*inch, 3*inch])
+        table = Table(data, colWidths=[3.5*inch, 2.5*inch])
         table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
+            ('BACKGROUND', (1, 0), (1, -1), colors.HexColor('#e8eaf6')),  # لون خلفية فاتح
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, -1), 'Cairo' if has_arabic_font else 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 12),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-            ('TOPPADDING', (0, 0), (-1, -1), 12),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTNAME', (0, 0), (-1, -1), 'ArabicFont' if has_arabic_font else 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 11),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#1a237e')),  # لون الشبكة أزرق داكن
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEADING', (0, 0), (-1, -1), 12),
+            ('WORDWRAP', (0, 0), (-1, -1), True),
+            ('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.white, colors.HexColor('#f5f5f5')]),  # تناوب ألوان الصفوف
         ]))
         
         elements.append(table)
-        elements.append(Spacer(1, 30))
+        elements.append(Spacer(1, 0.3*inch))
         
         # إضافة تذييل الصفحة
         footer_style = ParagraphStyle(
             'CustomFooter',
             parent=getSampleStyleSheet()['Normal'],
-            fontName='Cairo' if has_arabic_font else 'Helvetica',
-            fontSize=10,
+            fontName='ArabicFont' if has_arabic_font else 'Helvetica',
+            fontSize=9,
             alignment=1,
-            textColor=colors.grey
+            textColor=colors.HexColor('#1a237e'),  # لون أزرق داكن
+            leading=11,
+            allowWidows=0,
+            allowOrphans=0
         )
         footer = Paragraph(
-            get_display(arabic_reshaper.reshape("مجموعة مارينا - نظام حجز القاعات")),
+            process_arabic_text("مجموعة مارينا - نظام حجز القاعات"),
             footer_style
         )
         elements.append(footer)
