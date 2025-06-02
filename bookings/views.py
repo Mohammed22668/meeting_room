@@ -13,6 +13,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
 from .pdf_generator import create_booking_pdf
+import os
 
 
 
@@ -214,25 +215,28 @@ def accept_booking(request, booking_id):
         booking.status = 'accepted'
         booking.save()
         
-        # إنشاء ملف PDF
-        pdf_path = create_booking_pdf(booking)
-        
-        # إرسال بريد إلكتروني
-        subject = 'تم قبول طلب حجز القاعة'
-        
-        # إنشاء رابط متابعة الحجز
-        tracking_url = f"{settings.SITE_URL}/track/{booking.id}/"
-        
-        # تحضير سياق القالب
-        context = {
-            'booking': booking,
-            'tracking_url': tracking_url
-        }
-        
-        # تحميل قالب HTML
-        html_message = render_to_string('bookings/email/booking_accepted.html', context)
-        
         try:
+            # إنشاء ملف PDF
+            pdf_path = create_booking_pdf(booking)
+            
+            if not os.path.exists(pdf_path):
+                raise FileNotFoundError(f"PDF file was not created at {pdf_path}")
+            
+            # إرسال بريد إلكتروني
+            subject = 'تم قبول طلب حجز القاعة'
+            
+            # إنشاء رابط متابعة الحجز
+            tracking_url = f"{settings.SITE_URL}/track/{booking.id}/"
+            
+            # تحضير سياق القالب
+            context = {
+                'booking': booking,
+                'tracking_url': tracking_url
+            }
+            
+            # تحميل قالب HTML
+            html_message = render_to_string('bookings/email/booking_accepted.html', context)
+            
             # إنشاء رسالة البريد الإلكتروني
             email = EmailMessage(
                 subject=subject,
@@ -244,25 +248,38 @@ def accept_booking(request, booking_id):
             
             # إرفاق ملف PDF
             with open(pdf_path, 'rb') as f:
+                pdf_content = f.read()
+                if not pdf_content:
+                    raise ValueError("PDF file is empty")
                 email.attach(
                     f'booking_confirmation_{booking.id}.pdf',
-                    f.read(),
+                    pdf_content,
                     'application/pdf'
                 )
             
             # إرسال البريد الإلكتروني
             email.send(fail_silently=False)
             
+            # حذف ملف PDF بعد الإرسال
+            try:
+                os.remove(pdf_path)
+            except Exception as e:
+                print(f"Error deleting PDF file: {e}")
+            
             messages.success(request, 'تم قبول الحجز وإرسال تأكيد بالبريد الإلكتروني.')
+            
+        except FileNotFoundError as e:
+            messages.error(request, f'تم قبول الحجز ولكن حدث خطأ في إنشاء ملف PDF: {str(e)}')
+            print(f"Error creating PDF: {e}")
         except Exception as e:
             messages.error(request, f'تم قبول الحجز ولكن حدث خطأ في إرسال البريد الإلكتروني: {str(e)}')
-            print(f"Error sending email: {e}")  # للتتبع في السجلات
+            print(f"Error sending email: {e}")
             
     except BookingRequest.DoesNotExist:
         messages.error(request, 'لم يتم العثور على طلب الحجز.')
     except Exception as e:
         messages.error(request, f'حدث خطأ: {str(e)}')
-        print(f"Error in accept_booking: {e}")  # للتتبع في السجلات
+        print(f"Error in accept_booking: {e}")
     
-    return redirect('admin_bookings')  # أو أي صفحة أخرى تريد التوجيه إليها
+    return redirect('admin_bookings')
 
