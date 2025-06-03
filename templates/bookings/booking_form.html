@@ -653,16 +653,25 @@
 
         .row {
           margin: 0 -0.5rem;
+          display: flex;
+          flex-direction: column;
         }
 
         .col-lg-6 {
           padding: 0 0.5rem;
+          width: 100%;
+          order: 0;
+        }
+
+        .col-lg-6.order-lg-2 {
+          order: 1;
         }
 
         #calendar {
           height: 600px !important;
           padding: 1rem;
-          margin-top: 1rem;
+          margin-top: 0;
+          margin-bottom: 2rem;
         }
 
         .fc-timegrid-slot {
@@ -746,7 +755,7 @@
     <div class="booking-section">
       <div class="booking-container">
         <div class="row g-4">
-          <div class="col-lg-6">
+          <div class="col-lg-6 order-lg-2">
             <h2 class="form-title">تسجيل حجز القاعة</h2>
             
             <div class="alert alert-info" role="alert">
@@ -854,7 +863,7 @@
             </form>
           </div>
 
-          <div class="col-lg-6">
+          <div class="col-lg-6 order-lg-1">
             <h2 class="form-title">الحجوزات لهذا الأسبوع</h2>
             <div id="calendar"></div>
           </div>
