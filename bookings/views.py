@@ -418,3 +418,17 @@ def edit_booking(request, booking_id):
         messages.error(request, 'الطلب غير موجود')
         return redirect('admin_dashboard')
 
+@login_required
+def delete_booking(request, booking_id):
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    try:
+        booking = BookingRequest.objects.get(id=booking_id)
+        booking.delete()
+        messages.success(request, 'تم حذف الطلب بنجاح')
+    except BookingRequest.DoesNotExist:
+        messages.error(request, 'الطلب غير موجود')
+    
+    return redirect('admin_dashboard')
+

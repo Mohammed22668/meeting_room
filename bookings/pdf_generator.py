@@ -45,17 +45,12 @@ def process_arabic_text(text):
 def register_arabic_font():
     """تسجيل الخط العربي"""
     try:
-        # استخدام خط Arial مباشرة من نظام Windows
-        font_path = 'C:\\Windows\\Fonts\\arial.ttf'
+        # قائمة المسارات المحتملة للخطوط
+        font_paths = []
         
-        if os.path.exists(font_path):
-            print(f"Using Arial font from: {font_path}")
-            pdfmetrics.registerFont(TTFont('ArabicFont', font_path))
-            return True
-        else:
-            print("Arial font not found, trying alternative fonts...")
-            # محاولة استخدام خطوط بديلة
-            alternative_fonts = [
+        # مسارات Windows
+        if os.name == 'nt':  # Windows
+            windows_fonts = [
                 'C:\\Windows\\Fonts\\arial.ttf',
                 'C:\\Windows\\Fonts\\arialbd.ttf',
                 'C:\\Windows\\Fonts\\ariali.ttf',
@@ -63,15 +58,60 @@ def register_arabic_font():
                 'C:\\Windows\\Fonts\\simsun.ttc',
                 'C:\\Windows\\Fonts\\simhei.ttf',
             ]
+            font_paths.extend(windows_fonts)
+        
+        # مسارات Linux
+        elif os.name == 'posix':  # Linux/Unix
+            linux_fonts = [
+                # مسارات Noto
+                '/usr/share/fonts/truetype/noto/NotoSansArabic-Regular.ttf',
+                '/usr/share/fonts/truetype/noto/NotoSansArabic-Bold.ttf',
+                '/usr/share/fonts/noto/NotoSansArabic-Regular.ttf',
+                '/usr/share/fonts/noto/NotoSansArabic-Bold.ttf',
+                # مسارات Liberation
+                '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+                '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
+                '/usr/share/fonts/liberation/LiberationSans-Regular.ttf',
+                '/usr/share/fonts/liberation/LiberationSans-Bold.ttf',
+                # مسارات DejaVu
+                '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+                '/usr/share/fonts/dejavu/DejaVuSans.ttf',
+                # مسارات إضافية
+                '/usr/share/fonts/truetype/arabic/arabic.ttf',
+                '/usr/share/fonts/truetype/arabic/arabic-bold.ttf',
+                # مسارات النظام
+                '/usr/share/fonts/TTF/arial.ttf',
+                '/usr/share/fonts/TTF/arialbd.ttf',
+                '/usr/share/fonts/TTF/ariali.ttf',
+                '/usr/share/fonts/TTF/arialbi.ttf',
+            ]
+            font_paths.extend(linux_fonts)
             
-            for font in alternative_fonts:
-                if os.path.exists(font):
-                    print(f"Using alternative font: {font}")
-                    pdfmetrics.registerFont(TTFont('ArabicFont', font))
-                    return True
+            # البحث في مجلدات الخطوط الإضافية
+            additional_font_dirs = [
+                '/usr/local/share/fonts',
+                os.path.expanduser('~/.fonts'),
+                os.path.expanduser('~/.local/share/fonts'),
+            ]
             
-            print("No suitable font found")
-            return False
+            for font_dir in additional_font_dirs:
+                if os.path.exists(font_dir):
+                    for root, dirs, files in os.walk(font_dir):
+                        for file in files:
+                            if file.endswith(('.ttf', '.otf')):
+                                font_paths.append(os.path.join(root, file))
+        
+        # البحث عن الخط في المسارات المتاحة
+        for font_path in font_paths:
+            if os.path.exists(font_path):
+                print(f"Using font from: {font_path}")
+                pdfmetrics.registerFont(TTFont('ArabicFont', font_path))
+                return True
+        
+        # إذا لم يتم العثور على أي خط، استخدم الخط الافتراضي
+        print("No suitable font found, using default font")
+        return False
+        
     except Exception as e:
         print(f"Error registering font: {e}")
         return False
