@@ -71,7 +71,7 @@ def booking_form(request):
             
             # قائمة البريد الإلكتروني للمستلمين
             recipient_list = [
-                'ezio.ahmed12@gmail.com',
+                'ead@marinahospital-iq.com',
                 'prog_dev@marinagroupiq.com'
             ]
             
