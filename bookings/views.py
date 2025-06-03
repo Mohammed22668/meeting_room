@@ -14,6 +14,8 @@ from django.utils.html import strip_tags
 from django.conf import settings
 from .pdf_generator import create_booking_pdf
 import os
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login, logout
 
 
 
@@ -282,4 +284,119 @@ def accept_booking(request, booking_id):
         print(f"Error in accept_booking: {e}")
     
     return redirect('admin_bookings')
+
+def admin_login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None and user.is_staff:
+            login(request, user)
+            return redirect('admin_dashboard')
+        else:
+            messages.error(request, 'بيانات الدخول غير صحيحة')
+    
+    return render(request, 'bookings/admin_login.html')
+
+@login_required
+def admin_dashboard(request):
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    bookings = BookingRequest.objects.all().order_by('-created_at')
+    context = {
+        'bookings': bookings,
+        'room_choices': ROOM_CHOICES,
+    }
+    return render(request, 'bookings/admin_dashboard.html', context)
+
+@login_required
+def admin_logout(request):
+    logout(request)
+    return redirect('admin_login')
+
+@login_required
+def accept_booking(request, booking_id):
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    try:
+        booking = BookingRequest.objects.get(id=booking_id)
+        booking.status = 'accepted'
+        booking.save()
+        
+        # إرسال بريد إلكتروني للموافقة
+        subject = 'تم قبول طلب حجز القاعة'
+        html_message = render_to_string('bookings/email/booking_accepted.html', {
+            'booking': booking,
+            'tracking_url': f"{settings.SITE_URL}/track/{booking.id}/"
+        })
+        
+        email = EmailMessage(
+            subject=subject,
+            body=html_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[booking.email],
+        )
+        email.content_subtype = "html"
+        email.send(fail_silently=False)
+        
+        messages.success(request, 'تم قبول الطلب بنجاح')
+    except BookingRequest.DoesNotExist:
+        messages.error(request, 'الطلب غير موجود')
+    
+    return redirect('admin_dashboard')
+
+@login_required
+def reject_booking(request, booking_id):
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    try:
+        booking = BookingRequest.objects.get(id=booking_id)
+        booking.status = 'rejected'
+        booking.save()
+        
+        # إرسال بريد إلكتروني للرفض
+        subject = 'تم رفض طلب حجز القاعة'
+        html_message = render_to_string('bookings/email/booking_rejected.html', {
+            'booking': booking
+        })
+        
+        email = EmailMessage(
+            subject=subject,
+            body=html_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[booking.email],
+        )
+        email.content_subtype = "html"
+        email.send(fail_silently=False)
+        
+        messages.success(request, 'تم رفض الطلب بنجاح')
+    except BookingRequest.DoesNotExist:
+        messages.error(request, 'الطلب غير موجود')
+    
+    return redirect('admin_dashboard')
+
+@login_required
+def edit_booking(request, booking_id):
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    try:
+        booking = BookingRequest.objects.get(id=booking_id)
+        if request.method == 'POST':
+            booking.full_name = request.POST.get('full_name')
+            booking.email = request.POST.get('email')
+            booking.room = request.POST.get('room')
+            booking.date = request.POST.get('date')
+            booking.start_time = request.POST.get('start_time')
+            booking.end_time = request.POST.get('end_time')
+            booking.save()
+            messages.success(request, 'تم تحديث الطلب بنجاح')
+            return redirect('admin_dashboard')
+    except BookingRequest.DoesNotExist:
+        messages.error(request, 'الطلب غير موجود')
+        return redirect('admin_dashboard')
 
