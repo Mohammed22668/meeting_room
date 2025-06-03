@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-sb0r*tyo@*f!_ro+ir_whxu*#*gbhql#=q566zf#oc_4kj4-dv
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['www.marinareserve.com', 'marinareserve.com', '127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -45,6 +45,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -137,6 +138,12 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')    # هذا مجلد الت�
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# Add these lines for whitenoise
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_MANIFEST_STRICT = False
+WHITENOISE_ALLOW_ALL_ORIGINS = True
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -153,3 +160,10 @@ DEFAULT_FROM_EMAIL = 'eo.ghost12@gmail.com'  # البريد الإلكتروني
 
 # Site URL for email links
 SITE_URL = 'https://www.marinareserve.com'  # تغيير هذا في الإنتاج إلى عنوان موقعك
+
+
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://www.marinareserve.com',
+    'https://marinareserve.com',
+]
