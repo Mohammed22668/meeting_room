@@ -32,11 +32,17 @@ def process_arabic_text(text):
     if not text:
         return "-"
     try:
+        # تنظيف النص من أي رموز غير مرغوب فيها
+        text = str(text).strip()
+        
         # إضافة مسافة في نهاية النص إذا كان يحتوي على نص عربي
         if any('\u0600' <= char <= '\u06FF' for char in text):
             text = text + ' '
+        
+        # معالجة النص العربي
         reshaped_text = arabic_reshaper.reshape(text)
         bidi_text = get_display(reshaped_text)
+        
         return bidi_text
     except Exception as e:
         print(f"Error processing Arabic text: {e}")
@@ -62,30 +68,45 @@ def register_arabic_font():
         
         # مسارات Linux
         elif os.name == 'posix':  # Linux/Unix
-            linux_fonts = [
-                # مسارات Noto
+            # خطوط تدعم العربية والإنجليزية
+            bilingual_fonts = [
+                # خطوط IBM Plex (تدعم العربية والإنجليزية)
+                '/usr/share/fonts/truetype/ibm-plex/IBMPlexSansArabic-Regular.ttf',
+                '/usr/share/fonts/truetype/ibm-plex/IBMPlexSansArabic-Bold.ttf',
+                '/usr/share/fonts/truetype/ibm-plex/IBMPlexSansArabic-Medium.ttf',
+                # خطوط Readex Pro (تدعم العربية والإنجليزية)
+                '/usr/share/fonts/truetype/readex-pro/ReadexPro-Regular.ttf',
+                '/usr/share/fonts/truetype/readex-pro/ReadexPro-Bold.ttf',
+                '/usr/share/fonts/truetype/readex-pro/ReadexPro-Medium.ttf',
+                # خطوط Noto Sans (تدعم العربية والإنجليزية)
+                '/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf',
+                '/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf',
+                '/usr/share/fonts/truetype/noto/NotoSans-Medium.ttf',
+                # خطوط Noto Sans Arabic (للنصوص العربية فقط)
                 '/usr/share/fonts/truetype/noto/NotoSansArabic-Regular.ttf',
                 '/usr/share/fonts/truetype/noto/NotoSansArabic-Bold.ttf',
-                '/usr/share/fonts/noto/NotoSansArabic-Regular.ttf',
-                '/usr/share/fonts/noto/NotoSansArabic-Bold.ttf',
-                # مسارات Liberation
-                '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
-                '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
-                '/usr/share/fonts/liberation/LiberationSans-Regular.ttf',
-                '/usr/share/fonts/liberation/LiberationSans-Bold.ttf',
-                # مسارات DejaVu
-                '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-                '/usr/share/fonts/dejavu/DejaVuSans.ttf',
-                # مسارات إضافية
+                '/usr/share/fonts/truetype/noto/NotoSansArabic-Medium.ttf',
+            ]
+            
+            # مسارات النظام
+            system_fonts = [
                 '/usr/share/fonts/truetype/arabic/arabic.ttf',
                 '/usr/share/fonts/truetype/arabic/arabic-bold.ttf',
-                # مسارات النظام
-                '/usr/share/fonts/TTF/arial.ttf',
-                '/usr/share/fonts/TTF/arialbd.ttf',
-                '/usr/share/fonts/TTF/ariali.ttf',
-                '/usr/share/fonts/TTF/arialbi.ttf',
+                '/usr/share/fonts/truetype/arabic/arabic-regular.ttf',
+                '/usr/share/fonts/truetype/arabic/arabic-medium.ttf',
             ]
-            font_paths.extend(linux_fonts)
+            
+            # مسارات إضافية
+            additional_fonts = [
+                '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+                '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
+                '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+            ]
+            
+            # إضافة المسارات بالترتيب
+            font_paths.extend(bilingual_fonts)  # الأولوية الأولى
+            font_paths.extend(system_fonts)     # الأولوية الثانية
+            font_paths.extend(additional_fonts) # الأولوية الثالثة
             
             # البحث في مجلدات الخطوط الإضافية
             additional_font_dirs = [
@@ -99,14 +120,24 @@ def register_arabic_font():
                     for root, dirs, files in os.walk(font_dir):
                         for file in files:
                             if file.endswith(('.ttf', '.otf')):
-                                font_paths.append(os.path.join(root, file))
+                                font_path = os.path.join(root, file)
+                                # إعطاء الأولوية للخطوط ثنائية اللغة
+                                if any(bilingual_name in file.lower() for bilingual_name in ['plex', 'readex', 'notosans']):
+                                    font_paths.insert(0, font_path)
+                                else:
+                                    font_paths.append(font_path)
         
         # البحث عن الخط في المسارات المتاحة
         for font_path in font_paths:
             if os.path.exists(font_path):
-                print(f"Using font from: {font_path}")
-                pdfmetrics.registerFont(TTFont('ArabicFont', font_path))
-                return True
+                print(f"Trying font: {font_path}")
+                try:
+                    pdfmetrics.registerFont(TTFont('ArabicFont', font_path))
+                    print(f"Successfully registered font: {font_path}")
+                    return True
+                except Exception as e:
+                    print(f"Error registering font {font_path}: {e}")
+                    continue
         
         # إذا لم يتم العثور على أي خط، استخدم الخط الافتراضي
         print("No suitable font found, using default font")
