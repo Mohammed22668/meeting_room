@@ -3,7 +3,7 @@ from django.views.generic import CreateView, DetailView, TemplateView
 from django.urls import reverse_lazy
 from django.utils import timezone
 from datetime import timedelta
-from .models import BookingRequest, ROOM_CHOICES, STATUS_CHOICES
+from .models import BookingRequest, ROOM_CHOICES, STATUS_CHOICES, Company
 from .forms import BookingRequestForm
 from django.core.serializers.json import DjangoJSONEncoder
 import json
@@ -305,9 +305,12 @@ def admin_dashboard(request):
         return redirect('home')
     
     bookings = BookingRequest.objects.all().order_by('-created_at')
+    companies = Company.objects.all().order_by('name')
     context = {
         'bookings': bookings,
+        'companies': companies,
         'room_choices': ROOM_CHOICES,
+        'status_choices': STATUS_CHOICES,
     }
     return render(request, 'bookings/admin_dashboard.html', context)
 
@@ -393,6 +396,21 @@ def edit_booking(request, booking_id):
             booking.date = request.POST.get('date')
             booking.start_time = request.POST.get('start_time')
             booking.end_time = request.POST.get('end_time')
+            booking.purpose = request.POST.get('purpose')
+            booking.notes = request.POST.get('notes')
+            booking.status = request.POST.get('status')
+            
+            # تحديث الشركة
+            company_id = request.POST.get('company')
+            if company_id:
+                try:
+                    company = Company.objects.get(id=company_id)
+                    booking.company = company
+                except Company.DoesNotExist:
+                    booking.company = None
+            else:
+                booking.company = None
+                
             booking.save()
             messages.success(request, 'تم تحديث الطلب بنجاح')
             return redirect('admin_dashboard')

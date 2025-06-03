@@ -57,14 +57,29 @@
         }
 
         .table th {
-            background: rgba(44, 62, 80, 0.9);
+            background: rgba(44, 62, 80, 0.95);
             border-bottom: 2px solid rgba(255, 255, 255, 0.2);
             font-weight: 600;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            white-space: nowrap;
         }
 
         .table td {
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             vertical-align: middle;
+            padding: 12px 15px;
+        }
+
+        .table thead {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .table thead th {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .btn-action {
@@ -142,6 +157,35 @@
             background: #c0392b;
             transform: translateY(-2px);
         }
+
+        .modal-content {
+            background: rgba(44, 62, 80, 0.95);
+            color: var(--text-light);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .form-control, .form-select {
+            background: rgba(44, 62, 80, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-light);
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(44, 62, 80, 0.9);
+            border-color: var(--text-light);
+            color: var(--text-light);
+        }
+
+        .form-label {
+            color: var(--text-light);
+        }
     </style>
 </head>
 <body>
@@ -165,10 +209,14 @@
                             <th>#</th>
                             <th>الاسم</th>
                             <th>البريد الإلكتروني</th>
+                            <th>الشركة</th>
                             <th>القاعة</th>
+                            <th>الغرض</th>
                             <th>التاريخ</th>
                             <th>الوقت</th>
+                       
                             <th>الحالة</th>
+                            <th>تاريخ الإنشاء</th>
                             <th>الإجراءات</th>
                         </tr>
                     </thead>
@@ -178,14 +226,18 @@
                             <td>{{ booking.id }}</td>
                             <td>{{ booking.full_name }}</td>
                             <td>{{ booking.email }}</td>
+                            <td>{{ booking.company.name|default:"-" }}</td>
                             <td>{{ booking.get_room_display }}</td>
+                            <td>{{ booking.purpose }}</td>
                             <td>{{ booking.date }}</td>
                             <td>{{ booking.start_time }} - {{ booking.end_time }}</td>
+                         
                             <td>
                                 <span class="status-badge status-{{ booking.status }}">
                                     {{ booking.get_status_display }}
                                 </span>
                             </td>
+                            <td>{{ booking.created_at|date:"Y-m-d H:i" }}</td>
                             <td>
                                 <div class="btn-group">
                                     <button type="button" class="btn btn-action btn-edit" 
@@ -220,8 +272,8 @@
     <!-- Edit Modals -->
     {% for booking in bookings %}
     <div class="modal fade" id="editModal{{ booking.id }}" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content bg-dark">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">تعديل الطلب #{{ booking.id }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -229,36 +281,73 @@
                 <div class="modal-body">
                     <form method="POST" action="{% url 'edit_booking' booking.id %}">
                         {% csrf_token %}
-                        <div class="mb-3">
-                            <label class="form-label">الاسم</label>
-                            <input type="text" class="form-control" name="full_name" value="{{ booking.full_name }}">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">البريد الإلكتروني</label>
-                            <input type="email" class="form-control" name="email" value="{{ booking.email }}">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">القاعة</label>
-                            <select class="form-select" name="room">
-                                {% for value, label in room_choices %}
-                                <option value="{{ value }}" {% if booking.room == value %}selected{% endif %}>
-                                    {{ label }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">التاريخ</label>
-                            <input type="date" class="form-control" name="date" value="{{ booking.date|date:'Y-m-d' }}">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">الاسم</label>
+                                <input type="text" class="form-control" name="full_name" value="{{ booking.full_name }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">البريد الإلكتروني</label>
+                                <input type="email" class="form-control" name="email" value="{{ booking.email }}">
+                            </div>
                         </div>
                         <div class="row">
-                            <div class="col">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">الشركة</label>
+                                <select class="form-select" name="company">
+                                    <option value="">-- اختر الشركة --</option>
+                                    {% for company in companies %}
+                                    <option value="{{ company.id }}" {% if booking.company.id == company.id %}selected{% endif %}>
+                                        {{ company.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">القاعة</label>
+                                <select class="form-select" name="room">
+                                    {% for value, label in room_choices %}
+                                    <option value="{{ value }}" {% if booking.room == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">الغرض</label>
+                                <input type="text" class="form-control" name="purpose" value="{{ booking.purpose }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">الحالة</label>
+                                <select class="form-select" name="status">
+                                    {% for value, label in status_choices %}
+                                    <option value="{{ value }}" {% if booking.status == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">التاريخ</label>
+                                <input type="date" class="form-control" name="date" value="{{ booking.date|date:'Y-m-d' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label">وقت البدء</label>
                                 <input type="time" class="form-control" name="start_time" value="{{ booking.start_time|time:'H:i' }}">
                             </div>
-                            <div class="col">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label">وقت الانتهاء</label>
                                 <input type="time" class="form-control" name="end_time" value="{{ booking.end_time|time:'H:i' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">ملاحظات</label>
+                                <textarea class="form-control" name="notes" rows="3">{{ booking.notes }}</textarea>
                             </div>
                         </div>
                         <div class="text-end mt-3">
