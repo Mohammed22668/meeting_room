@@ -23,9 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-sb0r*tyo@*f!_ro+ir_whxu*#*gbhql#=q566zf#oc_4kj4-dv'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['www.marinareserve.com','marinareserve.com']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -129,9 +129,10 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
+STATIC_URL = '/static/'
 
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]  # هذا مجلد المصادر أثناء التطوير
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')    # هذا مجلد التجميع النهائي للإنتاج
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -147,7 +148,7 @@ EMAIL_HOST = 'smtp.gmail.com'  # أو خادم SMTP الخاص بك
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'eo.ghost12@gmail.com'  # بريدك الإلكتروني
-EMAIL_HOST_PASSWORD = 'zzvi cztn yavf xsgb'  # كلمة المرور الخاصة بالتطبيق
+EMAIL_HOST_PASSWORD = 'hfjo jsaz oxad zwta'  # كلمة المرور الخاصة بالتطبيق
 DEFAULT_FROM_EMAIL = 'eo.ghost12@gmail.com'  # البريد الإلكتروني الافتراضي للمراسلات
 
 # Site URL for email links
