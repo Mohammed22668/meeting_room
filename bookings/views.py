@@ -92,12 +92,9 @@ def booking_form(request):
 
     # جلب بيانات الأسبوع الحالي
     today = timezone.localdate()
-    start_week = today - timedelta(days=today.weekday())  # بداية الأسبوع (الاثنين)
-    end_week = start_week + timedelta(days=6)  # نهاية الأسبوع (الأحد)
-
-    # جلب جميع الحجوزات خلال الأسبوع
+    # جلب جميع الحجوزات المستقبلية
     bookings_qs = BookingRequest.objects.filter(
-        date__range=[start_week, end_week],
+        date__gte=today,
         status__in=['pending', 'accepted']  # استبعاد الحجوزات المرفوضة
     )
 

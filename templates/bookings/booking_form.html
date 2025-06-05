@@ -357,12 +357,9 @@
         border: none !important;
         margin: 1px !important;
         min-width: 70px !important;
-        min-height: 24px !important;
         position: relative !important;
-        display: inline-block !important;
-        width: calc(50% - 2px) !important;
-        margin: 1px !important;
-        vertical-align: top !important;
+        display: block !important;
+        width: calc(100% - 2px) !important;
       }
 
       .fc-event.accepted {
@@ -373,6 +370,23 @@
       .fc-event.pending {
         background-color: rgba(241, 196, 15, 0.9) !important;
         border-color: #f39c12 !important;
+      }
+
+      .fc-event-main-content {
+        position: relative;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 2px 4px;
+      }
+
+      .fc-event-time {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin: 0;
+        white-space: nowrap;
       }
 
       .fc-event-title {
@@ -387,27 +401,23 @@
         padding-right: 16px;
       }
 
-      .fc-event-time {
-        color: rgba(255, 255, 255, 0.9);
-        font-size: 0.75rem;
-        font-weight: 500;
-        margin: 0;
-        white-space: nowrap;
+      .fc-timegrid-event {
+        min-height: 25px !important;
+        margin: 1px 0 !important;
+        position: absolute !important;
+        width: calc(100% - 2px) !important;
       }
 
-      .fc-event-description {
-        font-size: 0.8rem !important;
-        color: var(--text-light) !important;
-        opacity: 0.9;
-        margin-top: 2px;
+      .fc-timegrid-event-harness {
+        position: absolute !important;
+        margin: 0 !important;
+        padding: 0 !important;
       }
 
-      .fc-view-harness {
-        height: calc(100% - 100px) !important;
-      }
-
-      .fc-scrollgrid {
-        height: 100% !important;
+      .fc-timegrid-event-harness-inset {
+        position: absolute !important;
+        margin: 0 !important;
+        padding: 0 !important;
       }
 
       .fc-timegrid-slot {
@@ -582,29 +592,6 @@
       .event-info-icon i {
         font-size: 0.6rem;
         color: white;
-      }
-
-      .fc-event-main-content {
-        position: relative;
-        padding-right: 16px;
-        display: flex;
-        flex-direction: column;
-        gap: 1px;
-      }
-
-      .fc-timegrid-event-harness {
-        position: relative !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-
-      .fc-timegrid-event-harness-inset {
-        position: relative !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        display: flex !important;
-        flex-wrap: wrap !important;
-        gap: 2px !important;
       }
 
       @media (max-width: 1200px) {
@@ -933,7 +920,19 @@
                 </div>
               `
             };
-          }
+          },
+          eventMinHeight: 25,
+          eventShortHeight: 25,
+          eventMinWidth: 70,
+          eventMaxWidth: 200,
+          eventTimeFormat: {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          },
+          forceEventDuration: true,
+          displayEventTime: true,
+          displayEventEnd: true
         });
         calendar.render();
 
