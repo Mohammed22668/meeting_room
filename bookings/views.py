@@ -90,11 +90,8 @@ def booking_form(request):
             messages.success(request, "تم تقديم طلب الحجز بنجاح، في انتظار الموافقة.")
             return redirect('booking_success', booking_id=booking.id)
 
-    # جلب بيانات الأسبوع الحالي
-    today = timezone.localdate()
-    # جلب جميع الحجوزات المستقبلية
+    # جلب جميع الحجوزات (المستقبلية والسابقة)
     bookings_qs = BookingRequest.objects.filter(
-        date__gte=today,
         status__in=['pending', 'accepted']  # استبعاد الحجوزات المرفوضة
     )
 
