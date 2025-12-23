@@ -152,6 +152,69 @@ class BookingSuccessView(TemplateView):
 
 def home(request):
     return render(request, 'bookings/home.html')
+
+def weekly_calendar(request):
+    """عرض الحجوزات للأسبوع الحالي فقط (من السبت إلى الخميس)"""
+    # حساب بداية ونهاية الأسبوع الحالي (من السبت إلى الخميس)
+    today = timezone.now().date()
+    # حساب يوم السبت من الأسبوع الحالي (بداية الأسبوع)
+    # weekday(): 0=Monday, 1=Tuesday, ..., 5=Saturday, 6=Sunday
+    days_since_saturday = (today.weekday() + 2) % 7  # حساب الأيام منذ السبت
+    week_start = today - timedelta(days=days_since_saturday)
+    # حساب الخميس: من السبت إلى الخميس = 5 أيام (السبت + 5 أيام = الخميس)
+    week_end = week_start + timedelta(days=5)  # الخميس (السبت + 5 أيام)
+    
+    # جلب الحجوزات للأسبوع الحالي فقط (المقبولة والمعلقة)
+    bookings_qs = BookingRequest.objects.filter(
+        date__gte=week_start,
+        date__lte=week_end,
+        status__in=['pending', 'accepted']  # استبعاد الحجوزات المرفوضة
+    )
+    
+    # تجهيز بيانات الأحداث للكالندر
+    bookings_events = []
+    
+    for b in bookings_qs:
+        start_dt = timezone.make_aware(timezone.datetime.combine(b.date, b.start_time))
+        end_dt = timezone.make_aware(timezone.datetime.combine(b.date, b.end_time))
+        color = {
+            'pending': '#ffc107',  # أصفر
+            'accepted': '#198754',  # أخضر
+        }.get(b.status, '#6c757d')  # رمادي افتراضي
+
+        event_data = {
+            'title': f"{b.full_name} ({b.purpose})",
+            'start': start_dt,
+            'end': end_dt,
+            'color': color,
+            'extendedProps': {
+                'status': dict(STATUS_CHOICES)[b.status],
+                'company': b.company.name if b.company else '',
+                'room': dict(ROOM_CHOICES)[b.room] if b.room else '',
+                'purpose': b.purpose,
+                'notes': b.notes or ''
+            }
+        }
+
+        bookings_events.append(event_data)
+
+    bookings_json = json.dumps(bookings_events, cls=DjangoJSONEncoder)
+    
+    # تنسيق تواريخ الأسبوع للعرض
+    week_dates = {
+        'start': week_start.strftime('%Y-%m-%d'),
+        'end': week_end.strftime('%Y-%m-%d'),
+        'start_display': week_start.strftime('%d/%m/%Y'),
+        'end_display': week_end.strftime('%d/%m/%Y'),
+    }
+
+    context = {
+        'bookings': bookings_json,
+        'week_start': week_start,
+        'week_end': week_end,
+        'week_dates': week_dates,
+    }
+    return render(request, 'bookings/weekly_calendar.html', context)
 def track_request_view(request):
     status = None
     booking = None
