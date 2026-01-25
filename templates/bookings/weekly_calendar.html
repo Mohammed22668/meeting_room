@@ -557,6 +557,49 @@
           displayEventEnd: true
         });
         calendar.render();
+        
+        // دالة لتحديث بيانات الحجوزات
+        function updateCalendarData() {
+          fetch('{% url "weekly_calendar_api" %}')
+            .then(response => response.json())
+            .then(data => {
+              // تحديث معلومات الأسبوع
+              const weekInfo = document.querySelector('.week-info');
+              if (weekInfo && data.week_start_display && data.week_end_display) {
+                weekInfo.innerHTML = `
+                  <i class="fas fa-calendar-week"></i>
+                  <strong>الأسبوع الحالي:</strong> من ${data.week_start_display} إلى ${data.week_end_display}
+                `;
+              }
+              
+              // تحديث أحداث التقويم
+              calendar.removeAllEvents();
+              
+              // إضافة الأحداث الجديدة
+              if (data.bookings && data.bookings.length > 0) {
+                data.bookings.forEach(function(event) {
+                  calendar.addEvent({
+                    title: event.title,
+                    start: event.start,
+                    end: event.end,
+                    color: event.color,
+                    extendedProps: event.extendedProps
+                  });
+                });
+              }
+              
+              console.log('تم تحديث بيانات التقويم بنجاح - ' + new Date().toLocaleTimeString('ar'));
+            })
+            .catch(error => {
+              console.error('خطأ في تحديث بيانات التقويم:', error);
+            });
+        }
+        
+        // تحديث البيانات كل 10 ثوان
+        setInterval(updateCalendarData, 10000); // 10000 ميلي ثانية = 10 ثوان
+        
+        // تحديث البيانات عند تحميل الصفحة (بعد 10 ثوان من التحميل الأول)
+        setTimeout(updateCalendarData, 10000);
       });
 
       function showEventDetails(event, title, time, date, company, room, purpose, notes) {

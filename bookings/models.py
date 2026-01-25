@@ -35,6 +35,7 @@ class BookingRequest(models.Model):
     start_time = models.TimeField(verbose_name='وقت البدء')
     end_time = models.TimeField(verbose_name='وقت الانتهاء')
     notes = models.TextField(blank=True, null=True, verbose_name='الملاحظات')
+    door_code = models.CharField(max_length=50, blank=True, null=True, verbose_name='رمز الباب')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', verbose_name='الحالة')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
 

@@ -3,7 +3,7 @@ from .views import (
     booking_form, home, BookingSuccessView, track_request_view,
     admin_login, admin_dashboard, admin_logout,
     accept_booking, reject_booking, edit_booking, delete_booking,
-    weekly_calendar
+    weekly_calendar, weekly_calendar_api
 )
 from django.views.generic import TemplateView
 
@@ -14,6 +14,7 @@ urlpatterns = [
     path('book/success/<int:booking_id>/', BookingSuccessView.as_view(), name='booking_success'),
     path('track/', track_request_view, name='track_booking'),
     path('calendar/weekly/', weekly_calendar, name='weekly_calendar'),
+    path('calendar/weekly/api/', weekly_calendar_api, name='weekly_calendar_api'),
     
     # Admin URLs
     path('booking-admin/login/', admin_login, name='admin_login'),

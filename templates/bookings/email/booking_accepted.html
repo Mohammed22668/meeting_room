@@ -62,6 +62,16 @@
             <li><strong>ملاحظات:</strong> {{ booking.notes }}</li>
             {% endif %}
         </ul>
+        {% if door_code %}
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; border: 2px solid #198754;">
+            <p style="margin: 0; font-size: 18px; font-weight: bold; color: #198754;">
+                🔑 رمز الباب: <span style="font-size: 24px; letter-spacing: 3px;">{{ door_code }}</span>
+            </p>
+            <p style="margin: 10px 0 0 0; font-size: 14px; color: #666;">
+                يرجى استخدام هذا الرمز للدخول إلى القاعة في وقت الحجز
+            </p>
+        </div>
+        {% endif %}
         <p>يرجى مراجعة المرفق للحصول على تأكيد الحجز.</p>
     </div>
     
