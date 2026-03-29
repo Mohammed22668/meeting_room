@@ -17,9 +17,39 @@ import os
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
+from django.db.utils import OperationalError
 
 
+def _booking_form_calendar_json():
+    """بيانات التقويم لصفحة نموذج الحجز (JSON للـ FullCalendar)."""
+    bookings_qs = BookingRequest.objects.filter(
+        status__in=['pending', 'accepted']
+    )
+    bookings_events = []
+    for b in bookings_qs:
+        start_dt = timezone.make_aware(timezone.datetime.combine(b.date, b.start_time))
+        end_dt = timezone.make_aware(timezone.datetime.combine(b.date, b.end_time))
+        color = {
+            'pending': '#ffc107',
+            'accepted': '#198754',
+        }.get(b.status, '#6c757d')
 
+        event_data = {
+            'title': f"{b.full_name} ({b.purpose})",
+            'start': start_dt,
+            'end': end_dt,
+            'color': color,
+            'extendedProps': {
+                'status': dict(STATUS_CHOICES)[b.status],
+                'company': b.company.name if b.company else '',
+                'room': dict(ROOM_CHOICES)[b.room] if b.room else '',
+                'purpose': b.purpose,
+                'notes': b.notes or ''
+            }
+        }
+        bookings_events.append(event_data)
+
+    return json.dumps(bookings_events, cls=DjangoJSONEncoder)
 
 
 def booking_form(request):
@@ -52,82 +82,75 @@ def booking_form(request):
                 ).first()
 
                 status_display = dict(STATUS_CHOICES)[conflicting_booking.status]
-                room_display = dict(ROOM_CHOICES)[conflicting_booking.room]
+                room_display = dict(ROOM_CHOICES).get(
+                    conflicting_booking.room, 'غير محدد'
+                )
                 
                 error_message = f'هذه القاعة ({room_display}) محجوزة في هذا الوقت من قبل {conflicting_booking.full_name} ({status_display})'
                 messages.error(request, error_message)
-                return render(request, 'bookings/booking_form.html', {'form': form})
+                return render(request, 'bookings/booking_form.html', {
+                    'form': form,
+                    'bookings': _booking_form_calendar_json(),
+                })
             
             # حفظ الطلب
             booking = form.save(commit=False)
             booking.status = 'pending'
-            booking.save()
+            try:
+                booking.save()
+            except OperationalError as e:
+                print(f"booking.save() OperationalError: {e}")
+                messages.error(
+                    request,
+                    'تعذر حفظ الطلب: قاعدة البيانات غير محدّثة. نفّذ على الخادم: python manage.py migrate'
+                )
+                return render(request, 'bookings/booking_form.html', {
+                    'form': form,
+                    'bookings': _booking_form_calendar_json(),
+                })
 
-            # إرسال بريد إلكتروني للمشرفين
+            # إرسال بريد إلكتروني للمشرفين (لا نوقف الطلب إذا فشل SMTP)
             subject = 'طلب حجز قاعة جديد'
             html_message = render_to_string('bookings/email/new_booking_notification.html', {
                 'booking': booking,
                 'tracking_url': f"{settings.SITE_URL}/track/{booking.id}/"
             })
             
-            # قائمة البريد الإلكتروني للمستلمين
             recipient_list = [
                 'ead@marinahospital-iq.com',
                 'prog_dev@marinagroupiq.com'
             ]
             
-            # إنشاء رسالة البريد الإلكتروني
             email = EmailMessage(
                 subject=subject,
                 body=html_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=recipient_list,
             )
-            email.content_subtype = "html"  # تحديد نوع المحتوى كـ HTML
+            email.content_subtype = "html"
             
-            # إرسال البريد الإلكتروني
-            email.send(fail_silently=False)
+            try:
+                email.send(fail_silently=False)
+            except Exception as e:
+                print(f"Error sending new booking notification email: {e}")
+                messages.warning(
+                    request,
+                    'تم حفظ طلب الحجز بنجاح، لكن تعذر إرسال إشعار البريد للمشرفين. سيتم المتابعة يدوياً إن لزم.'
+                )
+                return redirect('booking_success', booking_id=booking.id)
 
             messages.success(request, "تم تقديم طلب الحجز بنجاح، في انتظار الموافقة.")
             return redirect('booking_success', booking_id=booking.id)
 
-    # جلب جميع الحجوزات (المستقبلية والسابقة)
-    bookings_qs = BookingRequest.objects.filter(
-        status__in=['pending', 'accepted']  # استبعاد الحجوزات المرفوضة
-    )
-
-    # تجهيز بيانات الأحداث للكالندر
-    bookings_events = []
-    
-    for b in bookings_qs:
-        start_dt = timezone.make_aware(timezone.datetime.combine(b.date, b.start_time))
-        end_dt = timezone.make_aware(timezone.datetime.combine(b.date, b.end_time))
-        color = {
-            'pending': '#ffc107',  # أصفر
-            'accepted': '#198754',  # أخضر
-        }.get(b.status, '#6c757d')  # رمادي افتراضي
-
-        event_data = {
-            'title': f"{b.full_name} ({b.purpose})",
-            'start': start_dt,
-            'end': end_dt,
-            'color': color,
-            'extendedProps': {
-                'status': dict(STATUS_CHOICES)[b.status],
-                'company': b.company.name if b.company else '',
-                'room': dict(ROOM_CHOICES)[b.room] if b.room else '',
-                'purpose': b.purpose,
-                'notes': b.notes or ''
-            }
-        }
-
-        bookings_events.append(event_data)
-
-    bookings_json = json.dumps(bookings_events, cls=DjangoJSONEncoder)
+        # نموذج غير صالح: إعادة العرض مع التقويم
+        return render(request, 'bookings/booking_form.html', {
+            'form': form,
+            'bookings': _booking_form_calendar_json(),
+        })
 
     context = {
         'form': form,
-        'bookings': bookings_json,
+        'bookings': _booking_form_calendar_json(),
     }
     return render(request, 'bookings/booking_form.html', context)
 
@@ -340,6 +363,7 @@ def accept_booking(request, booking_id):
             booking.status = 'accepted'
             booking.save()
             
+            pdf_path = None
             try:
                 # إنشاء ملف PDF
                 pdf_path = create_booking_pdf(booking)
@@ -375,21 +399,35 @@ def accept_booking(request, booking_id):
                             'application/pdf'
                         )
                 
-                email.send(fail_silently=False)
-                
-                # حذف ملف PDF بعد الإرسال
                 try:
-                    os.remove(pdf_path)
-                except Exception as e:
-                    print(f"Error deleting PDF file: {e}")
-                
-                messages.success(request, 'تم قبول الطلب وإرسال رمز الباب عبر الإيميل بنجاح')
+                    email.send(fail_silently=False)
+                except Exception as send_err:
+                    # تفاصيل الخطأ في السيرفر فقط (رسائل طويلة قد تكسر تخزين الجلسة/الكوكي)
+                    print(f"Error sending email (accept_booking): {send_err}")
+                    messages.warning(
+                        request,
+                        'تم قبول الطلب وحفظ رمز الباب. تعذر إرسال البريد — راجع إعدادات Gmail أو كلمة مرور التطبيق.'
+                    )
+                else:
+                    messages.success(request, 'تم قبول الطلب وإرسال رمز الباب عبر الإيميل بنجاح')
             except FileNotFoundError as e:
-                messages.error(request, f'تم قبول الحجز ولكن حدث خطأ في إنشاء ملف PDF: {str(e)}')
-                print(f"Error creating PDF: {e}")
+                print(f"Error creating PDF (accept_booking): {e}")
+                messages.warning(
+                    request,
+                    'تم قبول الطلب. تعذر إنشاء ملف PDF المرفق؛ يمكنك إعادة المحاولة لاحقاً.'
+                )
             except Exception as e:
-                messages.error(request, f'تم قبول الحجز ولكن حدث خطأ في إرسال البريد الإلكتروني: {str(e)}')
-                print(f"Error sending email: {e}")
+                print(f"Error in accept_booking email/PDF flow: {e}")
+                messages.warning(
+                    request,
+                    'تم قبول الطلب. حدث خطأ أثناء إعداد البريد أو المرفق؛ تحقق من السجلات.'
+                )
+            finally:
+                if pdf_path and os.path.exists(pdf_path):
+                    try:
+                        os.remove(pdf_path)
+                    except OSError as rm_err:
+                        print(f"Error deleting PDF file: {rm_err}")
         else:
             messages.error(request, 'يجب إدخال رمز الباب للموافقة على الطلب')
             
@@ -421,9 +459,16 @@ def reject_booking(request, booking_id):
             to=[booking.email],
         )
         email.content_subtype = "html"
-        email.send(fail_silently=False)
-        
-        messages.success(request, 'تم رفض الطلب بنجاح')
+        try:
+            email.send(fail_silently=False)
+        except Exception as send_err:
+            print(f"Error sending email (reject_booking): {send_err}")
+            messages.warning(
+                request,
+                'تم رفض الطلب وحفظ الحالة. تعذر إرسال بريد الإشعار — راجع إعدادات SMTP.'
+            )
+        else:
+            messages.success(request, 'تم رفض الطلب بنجاح')
     except BookingRequest.DoesNotExist:
         messages.error(request, 'الطلب غير موجود')
     
@@ -490,14 +535,13 @@ def edit_booking(request, booking_id):
             
             # إرسال إيميل إذا كان الحجز مقبولاً وتم إضافة/تعديل رمز الباب
             if booking.status == 'accepted' and new_door_code and new_door_code != old_door_code:
+                pdf_path = None
                 try:
-                    # إنشاء ملف PDF
                     pdf_path = create_booking_pdf(booking)
                     
                     if not os.path.exists(pdf_path):
                         raise FileNotFoundError(f"PDF file was not created at {pdf_path}")
                     
-                    # إرسال بريد إلكتروني بالتحديث
                     subject = 'تم تحديث طلب حجز القاعة - رمز الباب'
                     tracking_url = f"{settings.SITE_URL}/track/{booking.id}/"
                     
@@ -515,7 +559,6 @@ def edit_booking(request, booking_id):
                     )
                     email.content_subtype = "html"
                     
-                    # إرفاق ملف PDF
                     with open(pdf_path, 'rb') as f:
                         pdf_content = f.read()
                         if pdf_content:
@@ -525,21 +568,34 @@ def edit_booking(request, booking_id):
                                 'application/pdf'
                             )
                     
-                    email.send(fail_silently=False)
-                    
-                    # حذف ملف PDF بعد الإرسال
                     try:
-                        os.remove(pdf_path)
-                    except Exception as e:
-                        print(f"Error deleting PDF file: {e}")
-                    
-                    messages.success(request, 'تم تحديث الطلب وإرسال رمز الباب عبر الإيميل بنجاح')
+                        email.send(fail_silently=False)
+                    except Exception as send_err:
+                        print(f"Error sending email (edit_booking): {send_err}")
+                        messages.warning(
+                            request,
+                            'تم تحديث الطلب. تعذر إرسال البريد — راجع إعدادات Gmail أو SMTP.'
+                        )
+                    else:
+                        messages.success(request, 'تم تحديث الطلب وإرسال رمز الباب عبر الإيميل بنجاح')
                 except FileNotFoundError as e:
-                    messages.warning(request, f'تم تحديث الطلب ولكن حدث خطأ في إنشاء ملف PDF: {str(e)}')
-                    print(f"Error creating PDF: {e}")
+                    print(f"Error creating PDF (edit_booking): {e}")
+                    messages.warning(
+                        request,
+                        'تم تحديث الطلب. تعذر إنشاء ملف PDF المرفق.'
+                    )
                 except Exception as e:
-                    messages.warning(request, f'تم تحديث الطلب ولكن حدث خطأ في إرسال البريد الإلكتروني: {str(e)}')
-                    print(f"Error sending email: {e}")
+                    print(f"Error in edit_booking email/PDF flow: {e}")
+                    messages.warning(
+                        request,
+                        'تم تحديث الطلب. حدث خطأ أثناء إعداد البريد؛ تحقق من السجلات.'
+                    )
+                finally:
+                    if pdf_path and os.path.exists(pdf_path):
+                        try:
+                            os.remove(pdf_path)
+                        except OSError as rm_err:
+                            print(f"Error deleting PDF file: {rm_err}")
             else:
                 messages.success(request, 'تم تحديث الطلب بنجاح')
             

@@ -155,7 +155,7 @@ EMAIL_HOST = 'smtp.gmail.com'  # أو خادم SMTP الخاص بك
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'eo.ghost12@gmail.com'  # بريدك الإلكتروني
-EMAIL_HOST_PASSWORD = 'hfjo jsaz oxad zwta'  # كلمة المرور الخاصة بالتطبيق
+EMAIL_HOST_PASSWORD = 'paib vyzw nsjs nkus'  # كلمة المرور الخاصة بالتطبيق
 DEFAULT_FROM_EMAIL = 'eo.ghost12@gmail.com'  # البريد الإلكتروني الافتراضي للمراسلات
 
 # Site URL for email links
